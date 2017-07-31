@@ -36,6 +36,7 @@ if_not_found(function () {
 
 // init controller
 include CONTROLLER_DIR.'/index.php';
+include CONTROLLER_DIR.'/yunbi.php';
 
 // fix
 not_found();
