@@ -16,14 +16,12 @@ if_has_exception(function ($ex) {
 });
 
 if_verify(function ($action, $args) {
-    return unit_of_work(function () use ($action, $args){
 
-        $data = call_user_func_array($action, $args);
+    $data = call_user_func_array($action, $args);
 
-        header('Content-type: application/json');
+    header('Content-type: application/json');
 
-        return json($data);
-    });
+    return json($data);
 });
 
 // init interceptor
