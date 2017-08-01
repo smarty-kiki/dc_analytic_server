@@ -2,5 +2,7 @@
 
 if_get('/yunbi/*', function ($table)
 {
-    return array_reverse(storage_query($table, [], [], ['at' => -1]));
+    $limit = input('limit', 1000);
+
+    return array_reverse(storage_query($table, [], [], ['at' => -1], 0, $limit));
 });
