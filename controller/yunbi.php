@@ -2,5 +2,5 @@
 
 if_get('/yunbi/*', function ($table)
 {
-    return storage_query($table);
+    return storage_query($table, [], [], ['at' => -1]);
 });
