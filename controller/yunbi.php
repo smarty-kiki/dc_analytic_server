@@ -2,5 +2,5 @@
 
 if_get('/yunbi/*', function ($table)
 {
-    return storage_query($table, [], [], ['at' => -1]);
+    return array_reverse(storage_query($table, [], [], ['at' => -1]));
 });
