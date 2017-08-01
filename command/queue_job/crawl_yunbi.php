@@ -36,7 +36,6 @@ queue_job('crawl_yunbi_k', function ($data)
         $timestamp = $info[0];
 
         if (storage_query($table, [], ['at' => $timestamp], ['at' => -1], 0, 1)) {
-            echo $table.' '.$timestamp."continue \n";
             continue;
         }
 
@@ -48,7 +47,6 @@ queue_job('crawl_yunbi_k', function ($data)
             'last' => $info[4],
             'vol' => $info[5],
         ]);
-        echo $table.' '.$timestamp."insert \n";
     }
 
     return true;
