@@ -53,9 +53,9 @@ queue_job('crawl_yunbi_k', function ($data)
 
         if (isset($inserted_ats[$timestamp])) {
             storage_update($table, ['at' => $timestamp], $insert_data);
+        } else {
+            $insert_datas[] = $insert_data;
         }
-
-        $insert_datas[] = $insert_data;
     }
 
     if ($insert_datas) {
