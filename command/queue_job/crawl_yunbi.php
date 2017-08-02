@@ -42,11 +42,7 @@ queue_job('crawl_yunbi_k', function ($data)
     foreach ($infos as $info) {
         $timestamp = $info[0];
 
-        if (isset($inserted_ats[$timestamp])) {
-            continue;
-        }
-
-        $insert_datas[] = [
+        $insert_data = [
             'at' => $info[0],
             'first' => $info[1],
             'max' => $info[2],
@@ -54,6 +50,12 @@ queue_job('crawl_yunbi_k', function ($data)
             'last' => $info[4],
             'vol' => $info[5],
         ];
+
+        if (isset($inserted_ats[$timestamp])) {
+            storage_update($table, ['at' => $timestamp], $insert_data);
+        }
+
+        $insert_datas[] = $insert_data;
     }
 
     if ($insert_datas) {
