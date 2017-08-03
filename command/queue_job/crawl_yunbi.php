@@ -32,34 +32,37 @@ queue_job('crawl_yunbi_k', function ($data)
         'timestamp' => $last_timestamp,
     ]));
 
-    $insert_datas = [];
+    if ($infos) {
 
-    $ats = array_column($infos, 0);
-    $inserted_datas = storage_query($table, [], ['at' => ['$in' => $ats]], ['at' => -1], 0, 1);
-    $inserted_ats = array_column($inserted_datas, 'at');
-    $inserted_ats = array_flip($inserted_ats);
+        $insert_datas = [];
 
-    foreach ($infos as $info) {
-        $timestamp = $info[0];
+        $ats = array_column($infos, 0);
+        $inserted_datas = storage_query($table, [], ['at' => ['$in' => $ats]], ['at' => -1], 0, 1);
+        $inserted_ats = array_column($inserted_datas, 'at');
+        $inserted_ats = array_flip($inserted_ats);
 
-        $insert_data = [
-            'at' => $info[0],
-            'first' => $info[1],
-            'max' => $info[2],
-            'min' => $info[3],
-            'last' => $info[4],
-            'vol' => $info[5],
-        ];
+        foreach ($infos as $info) {
+            $timestamp = $info[0];
 
-        if (isset($inserted_ats[$timestamp])) {
-            storage_update($table, ['at' => $timestamp], $insert_data);
-        } else {
-            $insert_datas[] = $insert_data;
+            $insert_data = [
+                'at' => $info[0],
+                'first' => $info[1],
+                'max' => $info[2],
+                'min' => $info[3],
+                'last' => $info[4],
+                'vol' => $info[5],
+            ];
+
+            if (isset($inserted_ats[$timestamp])) {
+                storage_update($table, ['at' => $timestamp], $insert_data);
+            } else {
+                $insert_datas[] = $insert_data;
+            }
         }
-    }
 
-    if ($insert_datas) {
-        storage_multi_insert($table, $insert_datas);
+        if ($insert_datas) {
+            storage_multi_insert($table, $insert_datas);
+        }
     }
 
     return true;
