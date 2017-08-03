@@ -27,7 +27,7 @@ queue_job('crawl_yunbi_k', function ($data)
 
     $infos = remote_get_json('https://yunbi.com//api/v2/k.json?'.http_build_query([
         'market' => $market,
-        'limit' => 500,
+        'limit' => 1000,
         'period' => $period,
         'timestamp' => $last_timestamp,
     ]));
