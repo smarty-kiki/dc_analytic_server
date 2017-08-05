@@ -6,5 +6,5 @@ if_get('/yunbi/*/k/*', function ($dc_name, $period)
 
     $table = crawl_yunbi_k_table($dc_name, $period);
 
-    return array_reverse(storage_query($table, [], [], ['at' => -1], 0, $limit));
+    return array_reverse(db_simple_query($table, [], 'order by at desc limit '.$limit));
 });

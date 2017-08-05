@@ -28,14 +28,14 @@ command('crawler:yunbi-k-jobs', '从云币抓取 k 线数据', function () {
 
 command('crawler:yunbi-k-clean', '清除从云币抓取的 k 线数据', function () {
 
-    $infos = remote_get_json('https://yunbi.com/api/v2/tickers.json');
+    $infos = remote_get_json('https://yunbi.com//api/v2/markets.json');
 
     $periods = crawl_yunbi_k_periods();
 
-    foreach ($infos as $market => $info) {
+    foreach ($infos as $info) {
 
         foreach ($periods as $period) {
-            storage_delete(crawl_yunbi_k_table($market, $period));
+            db_structure('truncate '.crawl_yunbi_k_table($info['id'], $period));
         }
 
     }

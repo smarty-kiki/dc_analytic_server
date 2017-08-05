@@ -7,7 +7,7 @@ function crawl_yunbi_k_periods()
 
 function crawl_yunbi_k_table($market, $period)
 {
-    return "crawl_yunbi_k_{$market}_{$period}";
+    return "crawler_yunbi_{$market}_k_{$period}";
 }
 
 queue_job('crawl_yunbi_k', function ($data)
@@ -17,8 +17,7 @@ queue_job('crawl_yunbi_k', function ($data)
 
     $table = crawl_yunbi_k_table($market, $period);
 
-    $last_infos = storage_query($table, [], [], ['at' => -1], 0, 1);
-    $last_info = reset($last_infos);
+    $last_info = db_simple_query_first($table, [], 'order by at desc');
 
     $last_timestamp = 1262275200; // 2010-01-01 00:00:00
     if ($last_info) {
@@ -35,13 +34,14 @@ queue_job('crawl_yunbi_k', function ($data)
     if ($infos) {
 
         $insert_datas = [];
+        $insert_data_sql = [];
 
         $ats = array_column($infos, 0);
-        $inserted_datas = storage_query($table, [], ['at' => ['$in' => $ats]], ['at' => -1], 0, 1);
+        $inserted_datas = db_simple_query($table, ['at' => $ats]);
         $inserted_ats = array_column($inserted_datas, 'at');
         $inserted_ats = array_flip($inserted_ats);
 
-        foreach ($infos as $info) {
+        foreach ($infos as $k => $info) {
             $timestamp = $info[0];
 
             $insert_data = [
@@ -54,14 +54,14 @@ queue_job('crawl_yunbi_k', function ($data)
             ];
 
             if (isset($inserted_ats[$timestamp])) {
-                storage_update($table, ['at' => $timestamp], $insert_data);
+                db_simple_update($table, ['at' => $timestamp], $insert_data);
             } else {
                 $insert_datas[] = $insert_data;
             }
         }
 
         if ($insert_datas) {
-            storage_multi_insert($table, $insert_datas);
+            db_simple_multi_insert($table, $insert_datas);
         }
     }
 
