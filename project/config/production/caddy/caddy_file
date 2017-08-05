@@ -12,6 +12,7 @@ https://dc.smarty.so {
         path /var/www/dc_analytic_server
         interval 180
         then ln -fs /var/www/dc_analytic_server/project/config/production/supervisor/queue_worker.conf /etc/supervisor/conf.d/queue_worker.conf
+        then ln -fs /var/www/dc_analytic_server/project/config/production/supervisor/caddy.conf /etc/supervisor/conf.d/caddy.conf
         then supervisorctl update
     }
 }
