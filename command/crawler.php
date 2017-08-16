@@ -46,5 +46,6 @@ command('crawler:announcement', '清除从云币抓取的 k 线数据', function
 {/*{{{*/
 
     queue_push('crawl_jubi_announcement');
+    queue_push('crawl_bter_announcement');
 
 });/*}}}*/

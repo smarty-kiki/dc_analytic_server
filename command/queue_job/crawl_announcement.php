@@ -51,17 +51,34 @@ queue_job('crawl_bter_announcement', function ()
     try {
         $bter_domain = 'https://bter.com';
 
-        $html = file_get_contents($bter_domain.'/articlelist/ann');
-        $html = mb_convert_encoding($html, 'utf8', 'auto');
-        $dom = new html_parser($html);
+        $html = remote_get($bter_domain.'/articlelist/ann', 3, 3, ['Accept-Language: zh-CN,zh;q=0.8,en;q=0.6']);
 
-        $titles = $dom->find('.latestnews .entry a', 0);
+        if (! $html) {
+            return false;
+        }
+
+        $html = mb_convert_encoding($html, 'utf8', 'auto');
+        $html = stristr($html, '<div class="latnewslist">');
+        $html = stristr($html, '<div class="newsplink">', true);
+        $html = preg_replace('/id=".*"/', '', $html);
+        preg_match_all('/h3\>(.*)\<\//', $html, $matches);
+
+        if (! $matches[1]) {
+            return false;
+        }
+
+        $titles = $matches[1];
         $titles = array_reverse($titles);
 
-        foreach ($titles as $title) {
+        $dom = new html_parser($html);
 
-            $url = trim($bter_domain.$title->href);
-            $title_text = trim($title->plaintext);
+        $hrefs = $dom->find('a');
+        $hrefs = array_reverse($hrefs);
+
+        foreach ($titles as $k => $title) {
+
+            $url = trim($bter_domain.$hrefs[$k]->href);
+            $title_text = trim($title);
 
             if (! db_simple_query_first(crawl_announcement_table(), ['url' => $url])) {
                 db_simple_insert(crawl_announcement_table(), [
@@ -70,13 +87,13 @@ queue_job('crawl_bter_announcement', function ()
                     'web' => 'bter',
                     'at' => now(),
                 ]);
-                slack_say_to_smarty_dc('bter: '.$title_text.' '.$url);
+                slack_say_to_smarty_dc('[bter] '.$title_text.' '.$url);
             }
         }
     } catch (Exception $ex) {
-        slack_say_to_smarty_dc('bter: 数据抓取出问题了');
+        slack_say_to_smarty_dc('[bter] 数据抓取出问题了');
         throw $ex;
     }
 
     return true;
-}, $priority = 10, $retry = [], $tube = 'default', $config_key = 'default');/*}}}*/
+}, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/
