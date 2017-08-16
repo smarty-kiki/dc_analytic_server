@@ -97,3 +97,47 @@ queue_job('crawl_bter_announcement', function ()
 
     return true;
 }, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/
+
+queue_job('crawl_yunbi_announcement', function ()
+{/*{{{*/
+    try {
+        $yunbi_domain = 'https://yunbi.zendesk.com';
+
+        $html = remote_get($yunbi_domain.'/hc/zh-cn/sections/115001467347-区块链资产品种介绍');
+
+        if (! $html) {
+            return false;
+        }
+
+        $html = mb_convert_encoding($html, 'utf8', 'auto');
+        $html = stristr($html, '<ul class="article-list">');
+        $html = stristr($html, '</section>', true);
+        $html = str_replace('（', '(', $html);
+        $html = str_replace('）', ')', $html);
+
+        $dom = new html_parser($html);
+        $titles = $dom->find('a');
+        $titles = array_reverse($titles);
+
+        foreach ($titles as $title) {
+
+            $url = trim($yunbi_domain.$title->href);
+            $title_text = trim($title->plaintext);
+
+            if (! db_simple_query_first(crawl_announcement_table(), ['url' => $url])) {
+                db_simple_insert(crawl_announcement_table(), [
+                    'title' => $title_text,
+                    'url' => $url,
+                    'web' => 'yunbi',
+                    'at' => now(),
+                ]);
+                slack_say_to_smarty_dc('[yunbi] 云币新币介绍 '.$title_text.' '.$url);
+            }
+        }
+    } catch (Exception $ex) {
+        slack_say_to_smarty_dc('[yunbi] 数据抓取出问题了');
+        throw $ex;
+    }
+
+    return true;
+}, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/
