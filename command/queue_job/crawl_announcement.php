@@ -10,7 +10,7 @@ queue_job('crawl_jubi_announcement', function ()
     try {
         $jubi_domain = 'https://www.jubi.com';
 
-        $html = file_get_contents($jubi_domain.'/gonggao/');
+        $html = remote_get($jubi_domain.'/gonggao/');
 
         if (! $html) {
             return false;
@@ -35,11 +35,11 @@ queue_job('crawl_jubi_announcement', function ()
                     'web' => 'jubi',
                     'at' => now(),
                 ]);
-                slack_say_to_smarty_dc('jubi: '.$title_text.' '.$url);
+                slack_say_to_smarty_dc('[jubi] '.$title_text.' '.$url);
             }
         }
     } catch (Exception $ex) {
-        slack_say_to_smarty_dc('jubi: 数据抓取出问题了');
+        slack_say_to_smarty_dc('[jubi] 数据抓取出问题了');
         throw $ex;
     }
 
