@@ -20,16 +20,17 @@ queue_job('crawl_jubi_announcement', function ()
 
         foreach ($titles as $title) {
 
-            $url = $jubi_domain.$title->href;
+            $url = trim($jubi_domain.$title->href);
+            $title_text = trim($title->plaintext);
 
             if (! db_simple_query_first(crawl_announcement_table(), ['url' => $url])) {
                 db_simple_insert(crawl_announcement_table(), [
-                    'title' => $title->plaintext,
+                    'title' => $title_text,
                     'url' => $url,
                     'web' => 'jubi',
                     'at' => now(),
                 ]);
-                slack_say_to_smarty_dc('jubi: '.$title->plaintext.' '.$url);
+                slack_say_to_smarty_dc('jubi: '.$title_text.' '.$url);
             }
         }
     } catch (Exception $ex) {
