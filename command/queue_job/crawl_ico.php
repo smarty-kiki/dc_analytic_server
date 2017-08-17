@@ -33,8 +33,8 @@ queue_job('crawl_icoage_ico', function ()
                 continue;
             } else {
                 $time_tmp = explode(' - ', $time);
-                $from = now($time_tmp[0]);
-                $to = now($time_tmp[1]);
+                $from = strtotime($time_tmp[0]);
+                $to = strtotime($time_tmp[1]);
             }
 
             if (! db_simple_query_first(crawl_ico_table(), ['url' => $url])) {
@@ -42,7 +42,7 @@ queue_job('crawl_icoage_ico', function ()
                     'title' => $title,
                     'url' => $url,
                     'web' => 'icoage',
-                    'at' => now(),
+                    'at' => time(),
                     'from' => $from,
                     'to' => $to,
                 ]);
@@ -96,9 +96,9 @@ queue_job('crawl_icoinfo_ico', function ()
                     'title' => $title,
                     'url' => $url,
                     'web' => 'icoinfo',
-                    'at' => now(),
-                    'from' => $from,
-                    'to' => $to,
+                    'at' => time(),
+                    'from' => strtotime($from),
+                    'to' => strtotime($to),
                 ]);
                 slack_say_to_smarty_dc('[icoinfo] 新确定的众筹 '.$title.' '.$url);
             }

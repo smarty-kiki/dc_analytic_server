@@ -33,7 +33,7 @@ queue_job('crawl_jubi_announcement', function ()
                     'title' => $title_text,
                     'url' => $url,
                     'web' => 'jubi',
-                    'at' => now(),
+                    'at' => time(),
                 ]);
                 slack_say_to_smarty_dc('[jubi] '.$title_text.' '.$url);
             }
@@ -76,7 +76,7 @@ queue_job('crawl_bter_announcement', function ()
                     'title' => $title_text,
                     'url' => $url,
                     'web' => 'bter',
-                    'at' => now(),
+                    'at' => time(),
                 ]);
                 slack_say_to_smarty_dc('[bter] '.$title_text.' '.$url);
             }
@@ -116,7 +116,7 @@ queue_job('crawl_yunbi_announcement', function ()
                     'title' => $title_text,
                     'url' => $url,
                     'web' => 'yunbi',
-                    'at' => now(),
+                    'at' => time(),
                 ]);
                 slack_say_to_smarty_dc('[yunbi] 云币新币介绍 '.$title_text.' '.$url);
             }
