@@ -128,3 +128,38 @@ queue_job('crawl_yunbi_announcement', function ()
 
     return true;
 }, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/
+
+queue_job('crawl_szzc_announcement', function ()
+{/*{{{*/
+    try {
+        $szzc_domain = 'https://szzc.com';
+        $url_template = 'https://szzc.com/#!/news/';
+
+        $res = remote_get_json($szzc_domain.'/api/news/articles/NOTICE?language=zh');
+
+        if (! $res) {
+            return false;
+        }
+
+        foreach ($res['result']['data'] as $info) {
+
+            $url = $url_template.$info['id'];
+            $title = trim(str_replace('【公告】', '', $info['subject']));
+
+            if (! db_simple_query_first(crawl_announcement_table(), ['url' => $url])) {
+                db_simple_insert(crawl_announcement_table(), [
+                    'title' => $title,
+                    'url' => $url,
+                    'web' => 'szzc',
+                    'at' => time(),
+                ]);
+                slack_say_to_smarty_dc('[szzc] '.$title.' '.$url);
+            }
+        }
+    } catch (Exception $ex) {
+        slack_say_to_smarty_dc('[szzc] 数据抓取出问题了');
+        throw $ex;
+    }
+
+    return true;
+}, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/
