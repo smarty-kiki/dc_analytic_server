@@ -257,3 +257,47 @@ queue_job('crawl_btc38_announcement', function ()
 
     return true;
 }, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/
+
+queue_job('crawl_btop_announcement', function ()
+{/*{{{*/
+    try {
+        $btop_domain = 'https://www.b.top';
+
+        $html = remote_get($btop_domain.'/notice/index.html?id=2');
+
+        if (! $html) {
+            return false;
+        }
+
+        $html = mb_convert_encoding($html, 'utf8', 'auto');
+
+        $dom = str_get_html($html);
+        $titles = $dom->find('.snc-max');
+        $titles = array_reverse($titles);
+
+        foreach ($titles as $title) {
+
+            $url = trim($btop_domain.$title->find('.snc-right a', 0)->href);
+            $title_text = trim($title->find('.snc-right a h3', 0)->plaintext);
+
+            if (str_ireplace(['上線'], '', $title_text) == $title_text) {
+                continue;
+            }
+
+            if (! db_simple_query_first(crawl_announcement_table(), ['url' => $url])) {
+                db_simple_insert(crawl_announcement_table(), [
+                    'title' => $title_text,
+                    'url' => $url,
+                    'web' => 'btop',
+                    'at' => time(),
+                ]);
+                slack_say_to_smarty_dc('[btop] '.$title_text.' '.$url);
+            }
+        }
+    } catch (Exception $ex) {
+        slack_say_to_smarty_dc('[btop] 数据抓取出问题了');
+        throw $ex;
+    }
+
+    return true;
+}, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/
