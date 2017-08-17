@@ -171,3 +171,54 @@ queue_job('crawl_renrenico_ico', function ()
 
     return true;
 }, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/
+
+queue_job('crawl_icooo_ico', function ()
+{/*{{{*/
+    try {
+        $icooo_domain = 'http://www.icooo.com';
+
+        $html = remote_get($icooo_domain.'/Issue/index/status/begin.html', 3, 3, ['Accept-Language: zh-CN,zh;q=0.8'], ['lang'=>'cn']);
+
+        if (! $html) {
+            return false;
+        }
+
+        $html = mb_convert_encoding($html, 'utf8', 'auto');
+        $dom = str_get_html($html);
+
+        $icos = $dom->find('.item-li');
+        $icos = array_reverse($icos);
+
+        foreach ($icos as $ico) {
+
+            $title = trim($ico->find('.item-title', 0)->plaintext);
+            $url = $icooo_domain.trim($ico->find('.item-title a', 0)->href);
+            $time_str = trim($ico->find('.fore3 .num', 0)->plaintext);
+
+            $time_str = strtotime('+'.str_replace([
+                '天',
+                '小时',
+            ], [
+                'days +',
+                'hours',
+            ], $time_str));
+
+            if (! db_simple_query_first(crawl_ico_table(), ['url' => $url])) {
+                db_simple_insert(crawl_ico_table(), [
+                    'title' => $title,
+                    'url' => $url,
+                    'web' => 'icooo',
+                    'at' => time(),
+                    'from' => $time_str,
+                    'to' => $time_str + 7200,
+                ]);
+                slack_say_to_smarty_dc('[icooo] 新确定的众筹 '.$title.' '.$url);
+            }
+        }
+    } catch (Exception $ex) {
+        slack_say_to_smarty_dc('[icooo] 数据抓取出问题了');
+        throw $ex;
+    }
+
+    return true;
+}, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/
