@@ -141,7 +141,10 @@ queue_job('crawl_szzc_announcement', function ()
             return false;
         }
 
-        foreach ($res['result']['data'] as $info) {
+        $data = $res['result']['data'];
+        $data = array_reverse($data);
+
+        foreach ($data as $info) {
 
             $url = $url_template.$info['id'];
             $title = trim(str_replace('【公告】', '', $info['subject']));
