@@ -17,7 +17,7 @@ queue_job('crawl_jubi_announcement', function ()
         }
 
         $html = mb_convert_encoding($html, 'utf8', 'auto');
-        $dom = new html_parser($html);
+        $dom = str_get_html($html);
 
         $new_list = $dom->find('.new_list', 0);
         $titles = $new_list->find('.title');
@@ -58,27 +58,18 @@ queue_job('crawl_bter_announcement', function ()
         }
 
         $html = mb_convert_encoding($html, 'utf8', 'auto');
-        $html = stristr($html, '<div class="latnewslist">');
-        $html = stristr($html, '<div class="newsplink">', true);
-        $html = preg_replace('/id=".*"/', '', $html);
-        preg_match_all('/h3\>(.*)\<\//', $html, $matches);
+        $dom = str_get_html($html);
 
-        if (! $matches[1]) {
-            return false;
-        }
-
-        $titles = $matches[1];
-        $titles = array_reverse($titles);
-
-        $dom = new html_parser($html);
-
-        $hrefs = $dom->find('a');
+        $hrefs = $dom->find('.latnewslist a');
         $hrefs = array_reverse($hrefs);
+
+        $titles = $dom->find('.latnewslist h3');
+        $titles = array_reverse($titles);
 
         foreach ($titles as $k => $title) {
 
             $url = trim($bter_domain.$hrefs[$k]->href);
-            $title_text = trim($title);
+            $title_text = trim($title->plaintext);
 
             if (! db_simple_query_first(crawl_announcement_table(), ['url' => $url])) {
                 db_simple_insert(crawl_announcement_table(), [
@@ -110,13 +101,9 @@ queue_job('crawl_yunbi_announcement', function ()
         }
 
         $html = mb_convert_encoding($html, 'utf8', 'auto');
-        $html = stristr($html, '<ul class="article-list">');
-        $html = stristr($html, '</section>', true);
-        $html = str_replace('（', '(', $html);
-        $html = str_replace('）', ')', $html);
 
-        $dom = new html_parser($html);
-        $titles = $dom->find('a');
+        $dom = str_get_html($html);
+        $titles = $dom->find('.article-list a');
         $titles = array_reverse($titles);
 
         foreach ($titles as $title) {
