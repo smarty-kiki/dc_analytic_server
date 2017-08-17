@@ -190,6 +190,8 @@ queue_job('crawl_btc9_announcement', function ()
 
             if (stristr($title_text, '【上币公告】')) {
                 $title_text = trim(str_replace('【上币公告】', '', $title_text));
+            } else {
+                continue;
             }
 
             $url = trim($btc9_domain.$title->find('a', 0)->href);
