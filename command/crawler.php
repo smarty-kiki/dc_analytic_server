@@ -42,11 +42,18 @@ command('crawler:yunbi-k-clean', '清除从云币抓取的 k 线数据', functio
 
 });/*}}}*/
 
-command('crawler:announcement', '清除从云币抓取的 k 线数据', function ()
+command('crawler:announcement', '抓取各交易平台公告', function ()
 {/*{{{*/
 
     queue_push('crawl_jubi_announcement');
     queue_push('crawl_bter_announcement');
     queue_push('crawl_yunbi_announcement');
+
+});/*}}}*/
+
+command('crawler:ico', '抓取各 ico 平台上新', function ()
+{/*{{{*/
+
+    queue_push('crawl_icoage_ico');
 
 });/*}}}*/
