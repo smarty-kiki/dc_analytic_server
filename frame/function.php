@@ -425,7 +425,7 @@ function now($expression = null, $format = 'Y-m-d H:i:s')
 {
     if (is_null($expression)) {
         $time = time();
-    } elseif (is_int($expression)) {
+    } elseif (is_numeric($expression)) {
         $time = $expression;
     } else {
         $time = strtotime($expression);
