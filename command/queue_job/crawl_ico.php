@@ -110,3 +110,64 @@ queue_job('crawl_icoinfo_ico', function ()
 
     return true;
 }, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/
+
+queue_job('crawl_renrenico_ico', function ()
+{/*{{{*/
+    try {
+        $renrenico_domain = 'https://renrenico.com';
+
+        $html = remote_get($renrenico_domain.'/', 10, 3, ['Accept-Language: zh-CN,zh;q=0.8'], ['lang'=>'cn']);
+
+        if (! $html) {
+            return false;
+        }
+
+        $html = mb_convert_encoding($html, 'utf8', 'auto');
+        $dom = str_get_html($html);
+
+        $icos = $dom->find('#icoWill .item-box');
+        $icos = array_reverse($icos);
+
+        foreach ($icos as $ico) {
+
+            $time_str = trim($ico->find('.item-state', 0)->plaintext);
+            if (stristr($time_str, '待定')) {
+                continue;
+            }
+
+            $title = trim($ico->find('.ico-item-title', 0)->plaintext);
+            $url = $renrenico_domain.trim($ico->find('.ico-item-title', 0)->href);
+
+            $time_str = strtotime(str_replace([
+                '距开始：',
+                '天 ',
+                '小时',
+                '分',
+                '秒',
+            ], [
+                '+',
+                'days +',
+                'hours +',
+                'minutes +',
+                's',
+            ], $time_str));
+
+            if (! db_simple_query_first(crawl_ico_table(), ['url' => $url])) {
+                db_simple_insert(crawl_ico_table(), [
+                    'title' => $title,
+                    'url' => $url,
+                    'web' => 'renrenico',
+                    'at' => time(),
+                    'from' => $time_str,
+                    'to' => $time_str + 7200,
+                ]);
+                slack_say_to_smarty_dc('[renrenico] 新确定的众筹 '.$title.' '.$url);
+            }
+        }
+    } catch (Exception $ex) {
+        slack_say_to_smarty_dc('[renrenico] 数据抓取出问题了');
+        throw $ex;
+    }
+
+    return true;
+}, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/
