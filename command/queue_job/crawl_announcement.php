@@ -213,3 +213,47 @@ queue_job('crawl_btc9_announcement', function ()
 
     return true;
 }, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/
+
+queue_job('crawl_btc38_announcement', function ()
+{/*{{{*/
+    try {
+        $btc38_domain = 'http://www.btc38.com';
+
+        $res = remote_get_json($btc38_domain.'/newsInfo.php?n='.rand());
+
+        if (! $res) {
+            return false;
+        }
+
+        $res = $res['notice'];
+        $res = array_reverse($res);
+
+        foreach ($res as $info) {
+
+            $title_text = $info['title'];
+
+            if (str_ireplace(['开放', '开启'], '', $title_text) != $title_text) {
+                $title_text = trim($title_text);
+            } else {
+                continue;
+            }
+
+            $url = trim($info['url']);
+
+            if (! db_simple_query_first(crawl_announcement_table(), ['url' => $url])) {
+                db_simple_insert(crawl_announcement_table(), [
+                    'title' => $title_text,
+                    'url' => $url,
+                    'web' => 'btc38',
+                    'at' => time(),
+                ]);
+                slack_say_to_smarty_dc('[btc38] '.$title_text.' '.$url);
+            }
+        }
+    } catch (Exception $ex) {
+        slack_say_to_smarty_dc('[btc38] 数据抓取出问题了');
+        throw $ex;
+    }
+
+    return true;
+}, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/
