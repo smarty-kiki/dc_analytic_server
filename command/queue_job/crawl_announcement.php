@@ -166,3 +166,48 @@ queue_job('crawl_szzc_announcement', function ()
 
     return true;
 }, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/
+
+queue_job('crawl_btc9_announcement', function ()
+{/*{{{*/
+    try {
+        $btc9_domain = 'https://www.btc9.com';
+
+        $html = remote_get($btc9_domain.'/Art/index/id/1.html');
+
+        if (! $html) {
+            return false;
+        }
+
+        $html = mb_convert_encoding($html, 'utf8', 'auto');
+
+        $dom = str_get_html($html);
+        $titles = $dom->find('.list-group-item');
+        $titles = array_reverse($titles);
+
+        foreach ($titles as $title) {
+
+            $title_text = $title->find('a', 0)->plaintext;
+
+            if (stristr($title_text, '【上币公告】')) {
+                $title_text = trim(str_replace('【上币公告】', '', $title_text));
+            }
+
+            $url = trim($btc9_domain.$title->find('a', 0)->href);
+
+            if (! db_simple_query_first(crawl_announcement_table(), ['url' => $url])) {
+                db_simple_insert(crawl_announcement_table(), [
+                    'title' => $title_text,
+                    'url' => $url,
+                    'web' => 'btc9',
+                    'at' => time(),
+                ]);
+                slack_say_to_smarty_dc('[btc9] '.$title_text.' '.$url);
+            }
+        }
+    } catch (Exception $ex) {
+        slack_say_to_smarty_dc('[btc9] 数据抓取出问题了');
+        throw $ex;
+    }
+
+    return true;
+}, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/
