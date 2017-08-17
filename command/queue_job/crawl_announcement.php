@@ -10,7 +10,7 @@ queue_job('crawl_jubi_announcement', function ()
     try {
         $jubi_domain = 'https://www.jubi.com';
 
-        $html = remote_get($jubi_domain.'/gonggao/');
+        $html = remote_get($jubi_domain.'/gonggao/', 10);
 
         if (! $html) {
             return false;
@@ -51,7 +51,7 @@ queue_job('crawl_bter_announcement', function ()
     try {
         $bter_domain = 'https://bter.com';
 
-        $html = remote_get($bter_domain.'/articlelist/ann', 3, 3, ['Accept-Language: zh-CN,zh;q=0.8,en;q=0.6']);
+        $html = remote_get($bter_domain.'/articlelist/ann', 10, 3, ['Accept-Language: zh-CN,zh;q=0.8,en;q=0.6']);
 
         if (! $html) {
             return false;
@@ -135,7 +135,7 @@ queue_job('crawl_szzc_announcement', function ()
         $szzc_domain = 'https://szzc.com';
         $url_template = 'https://szzc.com/#!/news/';
 
-        $res = remote_get_json($szzc_domain.'/api/news/articles/NOTICE?language=zh');
+        $res = remote_get_json($szzc_domain.'/api/news/articles/NOTICE?language=zh', 10);
 
         if (! $res) {
             return false;
@@ -172,7 +172,7 @@ queue_job('crawl_btc9_announcement', function ()
     try {
         $btc9_domain = 'https://www.btc9.com';
 
-        $html = remote_get($btc9_domain.'/Art/index/id/1.html');
+        $html = remote_get($btc9_domain.'/Art/index/id/1.html', 10);
 
         if (! $html) {
             return false;
@@ -219,7 +219,7 @@ queue_job('crawl_btc38_announcement', function ()
     try {
         $btc38_domain = 'http://www.btc38.com';
 
-        $res = remote_get_json($btc38_domain.'/newsInfo.php?n='.rand());
+        $res = remote_get_json($btc38_domain.'/newsInfo.php?n='.rand(), 10);
 
         if (! $res) {
             return false;
@@ -263,7 +263,7 @@ queue_job('crawl_btop_announcement', function ()
     try {
         $btop_domain = 'https://www.b.top';
 
-        $html = remote_get($btop_domain.'/notice/index.html?id=2');
+        $html = remote_get($btop_domain.'/notice/index.html?id=2', 10);
 
         if (! $html) {
             return false;

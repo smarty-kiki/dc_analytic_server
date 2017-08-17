@@ -10,7 +10,7 @@ queue_job('crawl_icoage_ico', function ()
     try {
         $icoage_domain = 'http://www.icoage.com';
 
-        $html = remote_get($icoage_domain.'/?p=search&flag=2', 3, 3, ['Accept-Language: zh-CN,zh;q=0.8'], ['lang'=>'cn']);
+        $html = remote_get($icoage_domain.'/?p=search&flag=2', 10, 3, ['Accept-Language: zh-CN,zh;q=0.8'], ['lang'=>'cn']);
 
         if (! $html) {
             return false;
@@ -62,7 +62,7 @@ queue_job('crawl_icoinfo_ico', function ()
     try {
         $icoinfo_domain = 'https://ico.info';
 
-        $html = remote_get($icoinfo_domain.'/projects?status=comming_soon', 3, 3, ['Accept-Language: zh-CN,zh;q=0.8'], ['lang'=>'cn']);
+        $html = remote_get($icoinfo_domain.'/projects?status=comming_soon', 10, 3, ['Accept-Language: zh-CN,zh;q=0.8'], ['lang'=>'cn']);
 
         if (! $html) {
             return false;
@@ -177,7 +177,7 @@ queue_job('crawl_icooo_ico', function ()
     try {
         $icooo_domain = 'http://www.icooo.com';
 
-        $html = remote_get($icooo_domain.'/Issue/index/status/begin.html', 3, 3, ['Accept-Language: zh-CN,zh;q=0.8'], ['lang'=>'cn']);
+        $html = remote_get($icooo_domain.'/Issue/index/status/begin.html', 10, 3, ['Accept-Language: zh-CN,zh;q=0.8'], ['lang'=>'cn']);
 
         if (! $html) {
             return false;
