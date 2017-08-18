@@ -9,7 +9,7 @@ if_get('/ical/ico', function ()
 
         foreach ($icos as $ico) {
             $ical->new_event();
-            $ical->set_title('ICO: '.$ico['title']);
+            $ical->set_title($ico['web'].': '.$ico['title']);
             $ical->set_description($ico['url']);
             $ical->set_dates(now($ico['from']), now($ico['to']));
             $ical->set_status("confirmed");
