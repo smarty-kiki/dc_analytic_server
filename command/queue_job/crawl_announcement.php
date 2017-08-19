@@ -60,25 +60,23 @@ queue_job('crawl_bter_announcement', function ()
         $html = mb_convert_encoding($html, 'utf8', 'auto');
         $dom = str_get_html($html);
 
-        $hrefs = $dom->find('.latnewslist a');
-        $hrefs = array_reverse($hrefs);
+        $anns = $dom->find('.latnewslist');
+        $anns = array_reverse($anns);
 
-        $titles = $dom->find('.latnewslist h3');
-        $titles = array_reverse($titles);
+        foreach ($anns as $k => $ann) {
 
-        foreach ($titles as $k => $title) {
-
-            $url = trim($bter_domain.$hrefs[$k]->href);
-            $title_text = trim($title->plaintext);
+            $url = trim($bter_domain.$ann->find('a', 0)->href);
+            $title= trim($ann->find('h3', 0)->plaintext);
 
             if (! db_simple_query_first(crawl_announcement_table(), ['url' => $url])) {
                 db_simple_insert(crawl_announcement_table(), [
-                    'title' => $title_text,
+                    'title' => $title,
                     'url' => $url,
                     'web' => 'bter',
                     'at' => time(),
                 ]);
-                slack_say_to_smarty_dc('[bter] '.$title_text.' '.$url);
+
+                slack_say_to_smarty_dc('[bter] '.$title.' '.$url);
             }
         }
     } catch (Exception $ex) {
