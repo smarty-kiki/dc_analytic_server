@@ -2,7 +2,7 @@
 
 if_get('/ical/ico', function ()
 {/*{{{*/
-    $icos = db_simple_query(crawl_ico_table(), ['at >=' => strtotime('-2 days')], 'order by at limit 100');
+    $icos = db_simple_query(crawl_ico_table(), ['from >=' => strtotime('-2 days')], 'order by at limit 100');
 
     if ($icos) {
         $ical = new iCal();
