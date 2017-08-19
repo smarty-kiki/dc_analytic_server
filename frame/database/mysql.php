@@ -243,7 +243,7 @@ function _db_simple_where_sql(array $wheres)
 
     foreach ($wheres as $column => $value) {
         if (is_array($value)) {
-            $where_sqls[] = "$column in :w_$column";
+            $where_sqls[] = "`$column` in :w_$column";
         } else {
             $column_info = explode(' ', $column);
             $column = $column_info[0];
@@ -300,7 +300,7 @@ function db_simple_update($table, array $wheres, array $data, $config_key = 'def
     $update = [];
 
     foreach ($data as $column => $value) {
-        $update[] = "$column = :u_$column";
+        $update[] = "`$column` = :u_$column";
         $binds[":u_$column"] = $value;
     }
 
