@@ -248,7 +248,7 @@ function _db_simple_where_sql(array $wheres)
             $column_info = explode(' ', $column);
             $column = $column_info[0];
             $symbol = isset($column_info[1])? $column_info[1]: '=';
-            $where_sqls[] = "$column $symbol :w_$column";
+            $where_sqls[] = "`$column` $symbol :w_$column";
         }
         $binds[":w_$column"] = $value;
     }
