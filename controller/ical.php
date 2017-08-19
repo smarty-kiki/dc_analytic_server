@@ -11,7 +11,7 @@ if_get('/ical/ico', function ()
             $ical->new_event();
             $ical->set_title($ico['web'].': '.$ico['title']);
             $ical->set_description($ico['url']);
-            $ical->set_dates(now($ico['from']), now($ico['to']));
+            $ical->set_dates(now($ico['from']), now($ico['from'] + 3600));
             $ical->set_status("confirmed");
             $ical->set_alarm();
             $ical->set_alarm_text("");
