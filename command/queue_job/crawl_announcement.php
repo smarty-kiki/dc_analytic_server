@@ -16,7 +16,7 @@ function crawl_announcement_save_and_send_slack($title, $url, $web)
         ]);
         slack_say_to_smarty_dc('['.$web.'] '.$title.' '.$url);
     } else {
-        if ($title !== $ann['title']) {
+        if ($title != $ann['title']) {
             db_simple_update(crawl_announcement_table(), ['url' => $url], [
                 'title' => $title
             ]);
