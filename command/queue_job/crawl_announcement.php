@@ -6,7 +6,7 @@ function crawl_announcement_table()
 }
 
 function crawl_announcement_save_and_send_slack($title, $url, $web)
-{
+{/*{{{*/
     if (! $ann = db_simple_query_first(crawl_announcement_table(), ['url' => $url])) {
         db_simple_insert(crawl_announcement_table(), [
             'title' => $title,
@@ -20,10 +20,10 @@ function crawl_announcement_save_and_send_slack($title, $url, $web)
             db_simple_update(crawl_announcement_table(), ['url' => $url], [
                 'title' => $title
             ]);
+            slack_say_to_smarty_dc('['.$web.'] 调整公告标题 '.$title.' '.$url);
         }
-        //slack_say_to_smarty_dc('['.$web.'] 调整公告标题 '.$title.' '.$url);
     }
-}
+}/*}}}*/
 
 queue_job('crawl_jubi_announcement', function ()
 {/*{{{*/
