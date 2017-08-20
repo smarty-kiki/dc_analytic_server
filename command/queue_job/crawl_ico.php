@@ -149,7 +149,7 @@ queue_job('crawl_renrenico_ico', function ()
                 'days +',
                 'hours +',
                 'minutes +',
-                's',
+                'seconds',
             ], $time_str));
 
             if (! db_simple_query_first(crawl_ico_table(), ['url' => $url])) {
