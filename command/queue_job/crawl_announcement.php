@@ -21,7 +21,7 @@ function crawl_announcement_save_and_send_slack($title, $url, $web)
                 'title' => $title
             ]);
         }
-        slack_say_to_smarty_dc('['.$web.'] 调整公告标题 '.$title.' '.$url);
+        //slack_say_to_smarty_dc('['.$web.'] 调整公告标题 '.$title.' '.$url);
     }
 }
 
