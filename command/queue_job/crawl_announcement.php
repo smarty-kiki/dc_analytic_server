@@ -5,12 +5,25 @@ function crawl_announcement_table()
     return "crawler_announcement";
 }
 
+function crawl_announcement_save_and_send_slack($title, $url, $web)
+{
+    if (! db_simple_query_first(crawl_announcement_table(), ['url' => $url])) {
+        db_simple_insert(crawl_announcement_table(), [
+            'title' => $title,
+            'url' => $url,
+            'web' => $web,
+            'at' => time(),
+        ]);
+        slack_say_to_smarty_dc('['.$web.'] '.$title.' '.$url);
+    }
+}
+
 queue_job('crawl_jubi_announcement', function ()
 {/*{{{*/
     try {
-        $jubi_domain = 'https://www.jubi.com';
+        $domain = 'https://www.jubi.com';
 
-        $html = remote_get($jubi_domain.'/gonggao/', 10);
+        $html = remote_get($domain.'/gonggao/', 10);
 
         if (! $html) {
             return false;
@@ -20,23 +33,15 @@ queue_job('crawl_jubi_announcement', function ()
         $dom = str_get_html($html);
 
         $new_list = $dom->find('.new_list', 0);
-        $titles = $new_list->find('.title');
-        $titles = array_reverse($titles);
+        $anns = $new_list->find('.title');
+        $anns = array_reverse($anns);
 
-        foreach ($titles as $title) {
+        foreach ($anns as $ann) {
 
-            $url = trim($jubi_domain.$title->href);
-            $title_text = trim($title->plaintext);
+            $url = trim($domain.$ann->href);
+            $title= trim($ann->plaintext);
 
-            if (! db_simple_query_first(crawl_announcement_table(), ['url' => $url])) {
-                db_simple_insert(crawl_announcement_table(), [
-                    'title' => $title_text,
-                    'url' => $url,
-                    'web' => 'jubi',
-                    'at' => time(),
-                ]);
-                slack_say_to_smarty_dc('[jubi] '.$title_text.' '.$url);
-            }
+            crawl_announcement_save_and_send_slack($title, $url, 'jubi');
         }
     } catch (Exception $ex) {
         slack_say_to_smarty_dc('[jubi] 数据抓取出问题了');
@@ -49,9 +54,9 @@ queue_job('crawl_jubi_announcement', function ()
 queue_job('crawl_bter_announcement', function ()
 {/*{{{*/
     try {
-        $bter_domain = 'https://bter.com';
+        $domain = 'https://bter.com';
 
-        $html = remote_get($bter_domain.'/articlelist/ann', 10, 3, ['Accept-Language: zh-CN,zh;q=0.8,en;q=0.6']);
+        $html = remote_get($domain.'/articlelist/ann', 10, 3, ['Accept-Language: zh-CN,zh;q=0.8,en;q=0.6']);
 
         if (! $html) {
             return false;
@@ -65,19 +70,10 @@ queue_job('crawl_bter_announcement', function ()
 
         foreach ($anns as $k => $ann) {
 
-            $url = trim($bter_domain.$ann->find('a', 0)->href);
+            $url = trim($domain.$ann->find('a', 0)->href);
             $title= trim($ann->find('h3', 0)->plaintext);
 
-            if (! db_simple_query_first(crawl_announcement_table(), ['url' => $url])) {
-                db_simple_insert(crawl_announcement_table(), [
-                    'title' => $title,
-                    'url' => $url,
-                    'web' => 'bter',
-                    'at' => time(),
-                ]);
-
-                slack_say_to_smarty_dc('[bter] '.$title.' '.$url);
-            }
+            crawl_announcement_save_and_send_slack($title, $url, 'bter');
         }
     } catch (Exception $ex) {
         slack_say_to_smarty_dc('[bter] 数据抓取出问题了');
@@ -90,9 +86,9 @@ queue_job('crawl_bter_announcement', function ()
 queue_job('crawl_yunbi_announcement', function ()
 {/*{{{*/
     try {
-        $yunbi_domain = 'https://yunbi.zendesk.com';
+        $domain = 'https://yunbi.zendesk.com';
 
-        $html = remote_get($yunbi_domain.'/hc/zh-cn/sections/115001467347-区块链资产品种介绍');
+        $html = remote_get($domain.'/hc/zh-cn/sections/115001467347-区块链资产品种介绍');
 
         if (! $html) {
             return false;
@@ -101,23 +97,15 @@ queue_job('crawl_yunbi_announcement', function ()
         $html = mb_convert_encoding($html, 'utf8', 'auto');
 
         $dom = str_get_html($html);
-        $titles = $dom->find('.article-list a');
-        $titles = array_reverse($titles);
+        $anns = $dom->find('.article-list a');
+        $anns = array_reverse($anns);
 
-        foreach ($titles as $title) {
+        foreach ($anns as $ann) {
 
-            $url = trim($yunbi_domain.$title->href);
-            $title_text = trim($title->plaintext);
+            $url = trim($domain.$ann->href);
+            $title= '云币新币介绍'.trim($ann->plaintext);
 
-            if (! db_simple_query_first(crawl_announcement_table(), ['url' => $url])) {
-                db_simple_insert(crawl_announcement_table(), [
-                    'title' => $title_text,
-                    'url' => $url,
-                    'web' => 'yunbi',
-                    'at' => time(),
-                ]);
-                slack_say_to_smarty_dc('[yunbi] 云币新币介绍 '.$title_text.' '.$url);
-            }
+            crawl_announcement_save_and_send_slack($title, $url, 'yunbi');
         }
     } catch (Exception $ex) {
         slack_say_to_smarty_dc('[yunbi] 数据抓取出问题了');
@@ -130,10 +118,10 @@ queue_job('crawl_yunbi_announcement', function ()
 queue_job('crawl_szzc_announcement', function ()
 {/*{{{*/
     try {
-        $szzc_domain = 'https://szzc.com';
+        $domain = 'https://szzc.com';
         $url_template = 'https://szzc.com/#!/news/';
 
-        $res = remote_get_json($szzc_domain.'/api/news/articles/NOTICE?language=zh', 10);
+        $res = remote_get_json($domain.'/api/news/articles/NOTICE?language=zh', 10);
 
         if (! $res) {
             return false;
@@ -147,15 +135,7 @@ queue_job('crawl_szzc_announcement', function ()
             $url = $url_template.$info['id'];
             $title = trim(str_replace('【公告】', '', $info['subject']));
 
-            if (! db_simple_query_first(crawl_announcement_table(), ['url' => $url])) {
-                db_simple_insert(crawl_announcement_table(), [
-                    'title' => $title,
-                    'url' => $url,
-                    'web' => 'szzc',
-                    'at' => time(),
-                ]);
-                slack_say_to_smarty_dc('[szzc] '.$title.' '.$url);
-            }
+            crawl_announcement_save_and_send_slack($title, $url, 'szzc');
         }
     } catch (Exception $ex) {
         slack_say_to_smarty_dc('[szzc] 数据抓取出问题了');
@@ -168,9 +148,9 @@ queue_job('crawl_szzc_announcement', function ()
 queue_job('crawl_btc9_announcement', function ()
 {/*{{{*/
     try {
-        $btc9_domain = 'https://www.btc9.com';
+        $domain = 'https://www.btc9.com';
 
-        $html = remote_get($btc9_domain.'/Art/index/id/1.html', 10);
+        $html = remote_get($domain.'/Art/index/id/1.html', 10);
 
         if (! $html) {
             return false;
@@ -179,30 +159,22 @@ queue_job('crawl_btc9_announcement', function ()
         $html = mb_convert_encoding($html, 'utf8', 'auto');
 
         $dom = str_get_html($html);
-        $titles = $dom->find('.list-group-item');
-        $titles = array_reverse($titles);
+        $anns = $dom->find('.list-group-item');
+        $anns = array_reverse($anns);
 
-        foreach ($titles as $title) {
+        foreach ($anns as $ann) {
 
-            $title_text = $title->find('a', 0)->plaintext;
+            $title = $ann->find('a', 0)->plaintext;
 
-            if (stristr($title_text, '【上币公告】')) {
-                $title_text = trim(str_replace('【上币公告】', '', $title_text));
+            if (stristr($title, '【上币公告】')) {
+                $title = trim(str_replace('【上币公告】', '', $title));
             } else {
                 continue;
             }
 
-            $url = trim($btc9_domain.$title->find('a', 0)->href);
+            $url = trim($domain.$ann->find('a', 0)->href);
 
-            if (! db_simple_query_first(crawl_announcement_table(), ['url' => $url])) {
-                db_simple_insert(crawl_announcement_table(), [
-                    'title' => $title_text,
-                    'url' => $url,
-                    'web' => 'btc9',
-                    'at' => time(),
-                ]);
-                slack_say_to_smarty_dc('[btc9] '.$title_text.' '.$url);
-            }
+            crawl_announcement_save_and_send_slack($title, $url, 'btc9');
         }
     } catch (Exception $ex) {
         slack_say_to_smarty_dc('[btc9] 数据抓取出问题了');
@@ -215,9 +187,9 @@ queue_job('crawl_btc9_announcement', function ()
 queue_job('crawl_btc38_announcement', function ()
 {/*{{{*/
     try {
-        $btc38_domain = 'http://www.btc38.com';
+        $domain = 'http://www.btc38.com';
 
-        $res = remote_get_json($btc38_domain.'/newsInfo.php?n='.rand(), 10);
+        $res = remote_get_json($domain.'/newsInfo.php?n='.rand(), 10);
 
         if (! $res) {
             return false;
@@ -228,25 +200,17 @@ queue_job('crawl_btc38_announcement', function ()
 
         foreach ($res as $info) {
 
-            $title_text = $info['title'];
+            $title = $info['title'];
 
-            if (str_ireplace(['开放', '开启'], '', $title_text) != $title_text) {
-                $title_text = trim($title_text);
+            if (str_ireplace(['开放', '开启'], '', $title) != $title) {
+                $title = trim($title);
             } else {
                 continue;
             }
 
             $url = trim($info['url']);
 
-            if (! db_simple_query_first(crawl_announcement_table(), ['url' => $url])) {
-                db_simple_insert(crawl_announcement_table(), [
-                    'title' => $title_text,
-                    'url' => $url,
-                    'web' => 'btc38',
-                    'at' => time(),
-                ]);
-                slack_say_to_smarty_dc('[btc38] '.$title_text.' '.$url);
-            }
+            crawl_announcement_save_and_send_slack($title, $url, 'btc38');
         }
     } catch (Exception $ex) {
         slack_say_to_smarty_dc('[btc38] 数据抓取出问题了');
@@ -259,9 +223,9 @@ queue_job('crawl_btc38_announcement', function ()
 queue_job('crawl_btop_announcement', function ()
 {/*{{{*/
     try {
-        $btop_domain = 'https://www.b.top';
+        $domain = 'https://www.b.top';
 
-        $html = remote_get($btop_domain.'/notice/index.html?id=2', 10);
+        $html = remote_get($domain.'/notice/index.html?id=2', 10);
 
         if (! $html) {
             return false;
@@ -270,27 +234,19 @@ queue_job('crawl_btop_announcement', function ()
         $html = mb_convert_encoding($html, 'utf8', 'auto');
 
         $dom = str_get_html($html);
-        $titles = $dom->find('.snc-max');
-        $titles = array_reverse($titles);
+        $anns = $dom->find('.snc-max');
+        $anns = array_reverse($anns);
 
-        foreach ($titles as $title) {
+        foreach ($anns as $ann) {
 
-            $url = trim($btop_domain.$title->find('.snc-right a', 0)->href);
-            $title_text = trim($title->find('.snc-right a h3', 0)->plaintext);
+            $url = trim($domain.$ann->find('.snc-right a', 0)->href);
+            $title = trim($ann->find('.snc-right a h3', 0)->plaintext);
 
-            if (str_ireplace(['上線'], '', $title_text) == $title_text) {
+            if (str_ireplace(['上線'], '', $title) == $title) {
                 continue;
             }
 
-            if (! db_simple_query_first(crawl_announcement_table(), ['url' => $url])) {
-                db_simple_insert(crawl_announcement_table(), [
-                    'title' => $title_text,
-                    'url' => $url,
-                    'web' => 'btop',
-                    'at' => time(),
-                ]);
-                slack_say_to_smarty_dc('[btop] '.$title_text.' '.$url);
-            }
+            crawl_announcement_save_and_send_slack($title, $url, 'btop');
         }
     } catch (Exception $ex) {
         slack_say_to_smarty_dc('[btop] 数据抓取出问题了');
