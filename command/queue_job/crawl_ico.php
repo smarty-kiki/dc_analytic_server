@@ -259,7 +259,7 @@ queue_job('crawl_aimwise_ico', function ()
 
         foreach ($icos as $ico) {
 
-            $title = trim($ico->name);
+            $title = trim($ico->icoName);
             $url = trim('https://aimwise.org/user/projectdetail.html?id='.$ico->id);
 
             $from = $ico->icoTimeStart / 1000;
