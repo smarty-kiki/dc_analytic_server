@@ -223,8 +223,8 @@ queue_job('crawl_3ico_ico', function ()
             $time_str = trim($ico->find('.time', 0)->plaintext);
 
             $time_info = array_filter(explode('|', str_replace(['锁定：', '开始：', '结束：'], '|', $time_str)));
-            $from = array_shift($time_info);
-            $to = array_pop($time_info);
+            $from = strtotime(trim(array_shift($time_info)));
+            $to = strtotime(trim(array_pop($time_info)));
 
             crawl_ico_save_and_send_slack($title, $url, '3ico', $from, $to);
         }
