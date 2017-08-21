@@ -199,3 +199,39 @@ queue_job('crawl_icooo_ico', function ()
 
     return true;
 }, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/
+
+queue_job('crawl_3ico_ico', function ()
+{/*{{{*/
+    try {
+        $domain = 'https://www.3ico.com';
+
+        $html = remote_get($domain.'/', 10, 3, ['Accept-Language: zh-CN,zh;q=0.8'], ['lang'=>'cn']);
+
+        if (! $html) {
+            return false;
+        }
+
+        $html = mb_convert_encoding($html, 'utf8', 'auto');
+        $dom = str_get_html($html);
+
+        $icos = $dom->find('#js-icoing li');
+
+        foreach ($icos as $ico) {
+
+            $title = trim($ico->find('.desc', 0)->plaintext);
+            $url = $domain.trim($ico->find('a', 0)->href);
+            $time_str = trim($ico->find('.time', 0)->plaintext);
+
+            $time_info = array_filter(explode('|', str_replace(['锁定：', '开始：', '结束：'], '|', $time_str)));
+            $from = array_shift($time_info);
+            $to = array_pop($time_info);
+
+            crawl_ico_save_and_send_slack($title, $url, '3ico', $from, $from + 7200);
+        }
+    } catch (Exception $ex) {
+        slack_say_to_smarty_dc('[3ico] 数据抓取出问题了');
+        throw $ex;
+    }
+
+    return true;
+}, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/

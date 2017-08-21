@@ -62,5 +62,6 @@ command('crawler:ico', '抓取各 ico 平台上新', function ()
     queue_push('crawl_icoinfo_ico');
     queue_push('crawl_renrenico_ico');
     queue_push('crawl_icooo_ico');
+    queue_push('crawl_3ico_ico');
 
 });/*}}}*/
