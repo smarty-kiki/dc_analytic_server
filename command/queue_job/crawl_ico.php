@@ -226,10 +226,49 @@ queue_job('crawl_3ico_ico', function ()
             $from = array_shift($time_info);
             $to = array_pop($time_info);
 
-            crawl_ico_save_and_send_slack($title, $url, '3ico', $from, $from + 7200);
+            crawl_ico_save_and_send_slack($title, $url, '3ico', $from, $to);
         }
     } catch (Exception $ex) {
         slack_say_to_smarty_dc('[3ico] 数据抓取出问题了');
+        throw $ex;
+    }
+
+    return true;
+}, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/
+
+queue_job('crawl_aimwise_ico', function ()
+{/*{{{*/
+    try {
+        $domain = 'https://aimwise.org';
+
+        $json = remote_post($domain.'/api/queryIcoProject', [
+            'status' => 1,
+            'page' => 0,
+            'pageSize' => 20,
+            'title' => 'up+coming',
+            'typeName' => 'goal',
+        ], 10, 3, ['Accept-Language: zh-CN,zh;q=0.8'], ['lang'=>'cn']);
+
+        if (! $json) {
+            return false;
+        }
+
+        $json = mb_convert_encoding($json, 'utf8', 'auto');
+
+        $icos = json_decode($json)->dataWrapper->icoProjects;
+
+        foreach ($icos as $ico) {
+
+            $title = trim($ico->name);
+            $url = trim('https://aimwise.org/user/projectdetail.html?id='.$ico->id);
+
+            $from = $ico->icoTimeStart / 1000;
+            $to = $ico->icoTimeEnd / 1000;
+
+            crawl_ico_save_and_send_slack($title, $url, 'aimwise', $from, $to);
+        }
+    } catch (Exception $ex) {
+        slack_say_to_smarty_dc('[aimwise] 数据抓取出问题了');
         throw $ex;
     }
 

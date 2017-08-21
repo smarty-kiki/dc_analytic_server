@@ -458,7 +458,7 @@ function date_between($date, $start, $end)
  *
  * @return string
  */
-function remote_post($url, $data = [], $timeout = 3, $retry = 3, array $headers = [])
+function remote_post($url, $data = [], $timeout = 3, $retry = 3, array $headers = [], array $cookies = [])
 {/*{{{*/
     $ch = curl_init();
 
@@ -473,6 +473,10 @@ function remote_post($url, $data = [], $timeout = 3, $retry = 3, array $headers 
 
     if ($headers) {
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    }
+
+    if ($cookies) {
+        curl_setopt ($ch, CURLOPT_COOKIE, http_build_query($cookies, '', ';').';');
     }
 
     while ($retry-- > 0) {
