@@ -335,3 +335,39 @@ queue_job('crawl_okcoin_announcement', function ()
 
     return true;
 }, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/
+
+queue_job('crawl_huobi_announcement', function ()
+{/*{{{*/
+    try {
+        $domain = 'https://www.huobi.com';
+
+        $html = remote_get($domain.'/p/content/notice', 10);
+
+        if (! $html) {
+            return false;
+        }
+
+        $html = mb_convert_encoding($html, 'utf8', 'auto');
+
+        $dom = str_get_html($html);
+        $anns = $dom->find('.notice li');
+        $anns = array_reverse($anns);
+
+        foreach ($anns as $ann) {
+
+            $url = $domain.trim(html_entity_decode($ann->find('a', 0)->href));
+            $title = trim(html_entity_decode($ann->find('a', 0)->plaintext));
+
+            if (str_ireplace(['上线', '开放', '正式开启'], '', $title) == $title) {
+                continue;
+            }
+
+            crawl_announcement_save_and_send_slack($title, $url, 'huobi');
+        }
+    } catch (Exception $ex) {
+        slack_say_to_smarty_dc('[huobi] 数据抓取出问题了');
+        throw $ex;
+    }
+
+    return true;
+}, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/

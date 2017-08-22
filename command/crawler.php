@@ -54,6 +54,7 @@ command('crawler:announcement', '抓取各交易平台公告', function ()
     queue_push('crawl_btop_announcement');
     queue_push('crawl_binance_announcement');
     queue_push('crawl_okcoin_announcement');
+    queue_push('crawl_huobi_announcement');
 
 });/*}}}*/
 
