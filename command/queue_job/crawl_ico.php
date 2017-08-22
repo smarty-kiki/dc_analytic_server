@@ -292,6 +292,10 @@ queue_job('crawl_binance_ico', function ()
 
         foreach ($icos as $ico) {
 
+            if ($ico->projectStatusName != "预热中") {
+                continue;
+            }
+
             $title = trim($ico->projectName);
             $url = trim($domain.'/icoDetails.html?projectId='.$ico->projectId);
 
