@@ -260,7 +260,7 @@ queue_job('crawl_aimwise_ico', function ()
         foreach ($icos as $ico) {
 
             $title = trim($ico->icoName);
-            $url = trim('https://aimwise.org/user/projectdetail.html?id='.$ico->id);
+            $url = trim($domain.'/user/projectdetail.html?id='.$ico->id);
 
             $from = $ico->icoTimeStart / 1000;
             $to = $ico->icoTimeEnd / 1000;
@@ -269,6 +269,39 @@ queue_job('crawl_aimwise_ico', function ()
         }
     } catch (Exception $ex) {
         slack_say_to_smarty_dc('[aimwise] 数据抓取出问题了');
+        throw $ex;
+    }
+
+    return true;
+}, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/
+
+queue_job('crawl_binance_ico', function ()
+{/*{{{*/
+    try {
+        $domain = 'https://www.binance.com';
+
+        $json = remote_post($domain.'/project/getProjects.html', [], 10, 3, ['lang: cn']);
+
+        if (! $json) {
+            return false;
+        }
+
+        $json = mb_convert_encoding($json, 'utf8', 'auto');
+
+        $icos = json_decode($json)->rows;
+
+        foreach ($icos as $ico) {
+
+            $title = trim($ico->projectName);
+            $url = trim($domain.'/icoDetails.html?projectId='.$ico->projectId);
+
+            $from = $ico->time / 1000;
+            $to = $from + 7200;
+
+            crawl_ico_save_and_send_slack($title, $url, 'binance', $from, $to);
+        }
+    } catch (Exception $ex) {
+        slack_say_to_smarty_dc('[binance] 数据抓取出问题了');
         throw $ex;
     }
 
