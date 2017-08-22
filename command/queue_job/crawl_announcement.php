@@ -262,3 +262,39 @@ queue_job('crawl_btop_announcement', function ()
 
     return true;
 }, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/
+
+queue_job('crawl_binance_announcement', function ()
+{/*{{{*/
+    try {
+        $domain = 'https://binance.zendesk.com';
+
+        $html = remote_get($domain.'/hc/zh-cn/sections/115000106672-业务公告', 10);
+
+        if (! $html) {
+            return false;
+        }
+
+        $html = mb_convert_encoding($html, 'utf8', 'auto');
+
+        $dom = str_get_html($html);
+        $anns = $dom->find('.article-list .article-list-item a');
+        $anns = array_reverse($anns);
+
+        foreach ($anns as $ann) {
+
+            $url = trim($domain.$ann->href);
+            $title = trim($ann->plaintext);
+
+            if (str_ireplace(['上线', '开放'], '', $title) == $title) {
+                continue;
+            }
+
+            crawl_announcement_save_and_send_slack($title, $url, 'binance');
+        }
+    } catch (Exception $ex) {
+        slack_say_to_smarty_dc('[binance] 数据抓取出问题了');
+        throw $ex;
+    }
+
+    return true;
+}, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/
