@@ -371,3 +371,41 @@ queue_job('crawl_huobi_announcement', function ()
 
     return true;
 }, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/
+
+queue_job('crawl_yuanbao_announcement', function ()
+{/*{{{*/
+    try {
+        $domain = 'https://www.yuanbao.com';
+
+        $html = remote_get($domain.'/news/?corpid=0', 10);
+
+        if (! $html) {
+            return false;
+        }
+
+        $html = mb_convert_encoding($html, 'utf8', 'auto');
+
+        $dom = str_get_html($html);
+        $anns = $dom->find('#list li a');
+        $anns = array_reverse($anns);
+
+        foreach ($anns as $ann) {
+
+            $url = $domain.trim($ann->href);
+            $title = trim($ann->plaintext);
+
+            if (str_ireplace(['【上币】'], '', $title) == $title) {
+                continue;
+            }
+
+            $title = preg_replace('/.*【上币】/', '', $title);
+
+            crawl_announcement_save_and_send_slack($title, $url, 'yuanbao');
+        }
+    } catch (Exception $ex) {
+        slack_say_to_smarty_dc('[yuanbao] 数据抓取出问题了');
+        throw $ex;
+    }
+
+    return true;
+}, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/
