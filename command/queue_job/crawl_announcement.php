@@ -298,3 +298,40 @@ queue_job('crawl_binance_announcement', function ()
 
     return true;
 }, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/
+
+queue_job('crawl_okcoin_announcement', function ()
+{/*{{{*/
+    try {
+        $domain = 'https://www.okcoin.cn';
+
+        $html = remote_get($domain.'/service.html', 10, 3, [], ['language' => 0]);
+
+        if (! $html) {
+            return false;
+        }
+
+        $html = mb_convert_encoding($html, 'utf8', 'auto');
+        $html = str_replace('"href', '" href', $html);
+
+        $dom = str_get_html($html);
+        $anns = $dom->find('.newsList .spanOne');
+        $anns = array_reverse($anns);
+
+        foreach ($anns as $ann) {
+
+            $url = trim(html_entity_decode($ann->find('a', 0)->href));
+            $title = trim(html_entity_decode($ann->find('a', 0)->plaintext));
+
+            if (str_ireplace(['上线', '开放'], '', $title) == $title) {
+                continue;
+            }
+
+            crawl_announcement_save_and_send_slack($title, $url, 'okcoin');
+        }
+    } catch (Exception $ex) {
+        slack_say_to_smarty_dc('[okcoin] 数据抓取出问题了');
+        throw $ex;
+    }
+
+    return true;
+}, $priority = 10, $retry = [3, 3, 3], $tube = 'default', $config_key = 'default');/*}}}*/
