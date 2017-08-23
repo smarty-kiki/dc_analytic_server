@@ -44,6 +44,11 @@ queue_job('crawl_icoage_ico', function ()
 
         $icos = $dom->find('.isotope-item');
 
+        if (! count($icos))
+        {
+            slack_say_to_smarty_ds('[icoage] 未获取到数据');
+        }
+
         foreach ($icos as $ico) {
 
             $title = trim($ico->find('.thumb-info-inner', 0)->plaintext);
@@ -83,6 +88,11 @@ queue_job('crawl_icoinfo_ico', function ()
         $dom = str_get_html($html);
 
         $icos = $dom->find('.project-item');
+
+        if (! count($icos))
+        {
+            slack_say_to_smarty_ds('[icoinfo] 未获取到数据');
+        }
 
         foreach ($icos as $ico) {
 
@@ -125,6 +135,11 @@ queue_job('crawl_renrenico_ico', function ()
         $dom = str_get_html($html);
 
         $icos = $dom->find('#icoWill .item-box');
+
+        if (! count($icos))
+        {
+            slack_say_to_smarty_ds('[renrenico] 未获取到数据');
+        }
 
         foreach ($icos as $ico) {
 
@@ -176,6 +191,11 @@ queue_job('crawl_icooo_ico', function ()
 
         $icos = $dom->find('.item-li');
 
+        if (! count($icos))
+        {
+            slack_say_to_smarty_ds('[icooo] 未获取到数据');
+        }
+
         foreach ($icos as $ico) {
 
             $title = trim($ico->find('.item-title', 0)->plaintext);
@@ -215,6 +235,11 @@ queue_job('crawl_3ico_ico', function ()
         $dom = str_get_html($html);
 
         $icos = $dom->find('#js-icoing li');
+
+        if (! count($icos))
+        {
+            slack_say_to_smarty_ds('[3ico] 未获取到数据');
+        }
 
         foreach ($icos as $ico) {
 
@@ -257,6 +282,11 @@ queue_job('crawl_aimwise_ico', function ()
 
         $icos = json_decode($json)->dataWrapper->icoProjects;
 
+        if (! count($icos))
+        {
+            slack_say_to_smarty_ds('[aimwise] 未获取到数据');
+        }
+
         foreach ($icos as $ico) {
 
             $title = trim($ico->icoName);
@@ -289,6 +319,11 @@ queue_job('crawl_binance_ico', function ()
         $json = mb_convert_encoding($json, 'utf8', 'auto');
 
         $icos = json_decode($json)->rows;
+
+        if (! count($icos))
+        {
+            slack_say_to_smarty_ds('[binance] 未获取到数据');
+        }
 
         foreach ($icos as $ico) {
 
