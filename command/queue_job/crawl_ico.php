@@ -61,7 +61,7 @@ queue_job('crawl_icoage_ico', function ()
             crawl_ico_save_and_send_slack($title, $url, 'icoage', $from, $to);
         }
     } catch (Exception $ex) {
-        slack_say_to_smarty_dc('[icoage] 数据抓取出问题了');
+        slack_say_to_smarty_ds('[icoage] 数据抓取出问题了');
         throw $ex;
     }
 
@@ -103,7 +103,7 @@ queue_job('crawl_icoinfo_ico', function ()
             crawl_ico_save_and_send_slack($title, $url, 'icoinfo', $from, $to);
         }
     } catch (Exception $ex) {
-        slack_say_to_smarty_dc('[icoinfo] 数据抓取出问题了');
+        slack_say_to_smarty_ds('[icoinfo] 数据抓取出问题了');
         throw $ex;
     }
 
@@ -153,7 +153,7 @@ queue_job('crawl_renrenico_ico', function ()
             crawl_ico_save_and_send_slack($title, $url, 'renrenico', $from, $from + 7200);
         }
     } catch (Exception $ex) {
-        slack_say_to_smarty_dc('[renrenico] 数据抓取出问题了');
+        slack_say_to_smarty_ds('[renrenico] 数据抓取出问题了');
         throw $ex;
     }
 
@@ -193,7 +193,7 @@ queue_job('crawl_icooo_ico', function ()
             crawl_ico_save_and_send_slack($title, $url, 'icooo', $from, $from + 7200);
         }
     } catch (Exception $ex) {
-        slack_say_to_smarty_dc('[icooo] 数据抓取出问题了');
+        slack_say_to_smarty_ds('[icooo] 数据抓取出问题了');
         throw $ex;
     }
 
@@ -229,7 +229,7 @@ queue_job('crawl_3ico_ico', function ()
             crawl_ico_save_and_send_slack($title, $url, '3ico', $from, $to);
         }
     } catch (Exception $ex) {
-        slack_say_to_smarty_dc('[3ico] 数据抓取出问题了');
+        slack_say_to_smarty_ds('[3ico] 数据抓取出问题了');
         throw $ex;
     }
 
@@ -268,7 +268,7 @@ queue_job('crawl_aimwise_ico', function ()
             crawl_ico_save_and_send_slack($title, $url, 'aimwise', $from, $to);
         }
     } catch (Exception $ex) {
-        slack_say_to_smarty_dc('[aimwise] 数据抓取出问题了');
+        slack_say_to_smarty_ds('[aimwise] 数据抓取出问题了');
         throw $ex;
     }
 
@@ -305,7 +305,7 @@ queue_job('crawl_binance_ico', function ()
             crawl_ico_save_and_send_slack($title, $url, 'binance', $from, $to);
         }
     } catch (Exception $ex) {
-        slack_say_to_smarty_dc('[binance] 数据抓取出问题了');
+        slack_say_to_smarty_ds('[binance] 数据抓取出问题了');
         throw $ex;
     }
 

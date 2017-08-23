@@ -43,6 +43,11 @@ queue_job('crawl_jubi_announcement', function ()
         $anns = $new_list->find('.title');
         $anns = array_reverse($anns);
 
+        if (! count($anns))
+        {
+            slack_say_to_smarty_ds('[jubi] 未获取到数据');
+        }
+
         foreach ($anns as $ann) {
 
             $url = trim($domain.$ann->href);
@@ -51,7 +56,7 @@ queue_job('crawl_jubi_announcement', function ()
             crawl_announcement_save_and_send_slack($title, $url, 'jubi');
         }
     } catch (Exception $ex) {
-        slack_say_to_smarty_dc('[jubi] 数据抓取出问题了');
+        slack_say_to_smarty_ds('[jubi] 数据抓取出问题了');
         throw $ex;
     }
 
@@ -75,6 +80,11 @@ queue_job('crawl_bter_announcement', function ()
         $anns = $dom->find('.latnewslist');
         $anns = array_reverse($anns);
 
+        if (! count($anns))
+        {
+            slack_say_to_smarty_ds('[bter] 未获取到数据');
+        }
+
         foreach ($anns as $k => $ann) {
 
             $url = trim($domain.$ann->find('a', 0)->href);
@@ -83,7 +93,7 @@ queue_job('crawl_bter_announcement', function ()
             crawl_announcement_save_and_send_slack($title, $url, 'bter');
         }
     } catch (Exception $ex) {
-        slack_say_to_smarty_dc('[bter] 数据抓取出问题了');
+        slack_say_to_smarty_ds('[bter] 数据抓取出问题了');
         throw $ex;
     }
 
@@ -107,6 +117,11 @@ queue_job('crawl_yunbi_announcement', function ()
         $anns = $dom->find('.article-list a');
         $anns = array_reverse($anns);
 
+        if (! count($anns))
+        {
+            slack_say_to_smarty_ds('[yunbi] 未获取到数据');
+        }
+
         foreach ($anns as $ann) {
 
             $url = trim($domain.$ann->href);
@@ -115,7 +130,7 @@ queue_job('crawl_yunbi_announcement', function ()
             crawl_announcement_save_and_send_slack($title, $url, 'yunbi');
         }
     } catch (Exception $ex) {
-        slack_say_to_smarty_dc('[yunbi] 数据抓取出问题了');
+        slack_say_to_smarty_ds('[yunbi] 数据抓取出问题了');
         throw $ex;
     }
 
@@ -135,17 +150,22 @@ queue_job('crawl_szzc_announcement', function ()
         }
 
         $data = $res['result']['data'];
-        $data = array_reverse($data);
+        $anns = array_reverse($data);
 
-        foreach ($data as $info) {
+        if (! count($anns))
+        {
+            slack_say_to_smarty_ds('[szzc] 未获取到数据');
+        }
 
-            $url = $url_template.$info['id'];
-            $title = trim(str_replace('【公告】', '', $info['subject']));
+        foreach ($anns as $ann) {
+
+            $url = $url_template.$ann['id'];
+            $title = trim(str_replace('【公告】', '', $ann['subject']));
 
             crawl_announcement_save_and_send_slack($title, $url, 'szzc');
         }
     } catch (Exception $ex) {
-        slack_say_to_smarty_dc('[szzc] 数据抓取出问题了');
+        slack_say_to_smarty_ds('[szzc] 数据抓取出问题了');
         throw $ex;
     }
 
@@ -169,6 +189,11 @@ queue_job('crawl_btc9_announcement', function ()
         $anns = $dom->find('.list-group-item');
         $anns = array_reverse($anns);
 
+        if (! count($anns))
+        {
+            slack_say_to_smarty_ds('[btc9] 未获取到数据');
+        }
+
         foreach ($anns as $ann) {
 
             $title = $ann->find('a', 0)->plaintext;
@@ -184,7 +209,7 @@ queue_job('crawl_btc9_announcement', function ()
             crawl_announcement_save_and_send_slack($title, $url, 'btc9');
         }
     } catch (Exception $ex) {
-        slack_say_to_smarty_dc('[btc9] 数据抓取出问题了');
+        slack_say_to_smarty_ds('[btc9] 数据抓取出问题了');
         throw $ex;
     }
 
@@ -203,11 +228,16 @@ queue_job('crawl_btc38_announcement', function ()
         }
 
         $res = $res['notice'];
-        $res = array_reverse($res);
+        $anns = array_reverse($res);
 
-        foreach ($res as $info) {
+        if (! count($anns))
+        {
+            slack_say_to_smarty_ds('[btc38] 未获取到数据');
+        }
 
-            $title = $info['title'];
+        foreach ($anns as $ann) {
+
+            $title = $ann['title'];
 
             if (str_ireplace(['开放', '开启'], '', $title) != $title) {
                 $title = trim($title);
@@ -215,12 +245,12 @@ queue_job('crawl_btc38_announcement', function ()
                 continue;
             }
 
-            $url = trim($info['url']);
+            $url = trim($ann['url']);
 
             crawl_announcement_save_and_send_slack($title, $url, 'btc38');
         }
     } catch (Exception $ex) {
-        slack_say_to_smarty_dc('[btc38] 数据抓取出问题了');
+        slack_say_to_smarty_ds('[btc38] 数据抓取出问题了');
         throw $ex;
     }
 
@@ -244,6 +274,11 @@ queue_job('crawl_btop_announcement', function ()
         $anns = $dom->find('.snc-max');
         $anns = array_reverse($anns);
 
+        if (! count($anns))
+        {
+            slack_say_to_smarty_ds('[btop] 未获取到数据');
+        }
+
         foreach ($anns as $ann) {
 
             $url = trim($domain.$ann->find('.snc-right a', 0)->href);
@@ -256,7 +291,7 @@ queue_job('crawl_btop_announcement', function ()
             crawl_announcement_save_and_send_slack($title, $url, 'btop');
         }
     } catch (Exception $ex) {
-        slack_say_to_smarty_dc('[btop] 数据抓取出问题了');
+        slack_say_to_smarty_ds('[btop] 数据抓取出问题了');
         throw $ex;
     }
 
@@ -280,6 +315,11 @@ queue_job('crawl_binance_announcement', function ()
         $anns = $dom->find('.article-list .article-list-item a');
         $anns = array_reverse($anns);
 
+        if (! count($anns))
+        {
+            slack_say_to_smarty_ds('[binance] 未获取到数据');
+        }
+
         foreach ($anns as $ann) {
 
             $url = trim($domain.$ann->href);
@@ -292,7 +332,7 @@ queue_job('crawl_binance_announcement', function ()
             crawl_announcement_save_and_send_slack($title, $url, 'binance');
         }
     } catch (Exception $ex) {
-        slack_say_to_smarty_dc('[binance] 数据抓取出问题了');
+        slack_say_to_smarty_ds('[binance] 数据抓取出问题了');
         throw $ex;
     }
 
@@ -317,6 +357,11 @@ queue_job('crawl_okcoin_announcement', function ()
         $anns = $dom->find('.newsList .spanOne');
         $anns = array_reverse($anns);
 
+        if (! count($anns))
+        {
+            slack_say_to_smarty_ds('[okcoin] 未获取到数据');
+        }
+
         foreach ($anns as $ann) {
 
             $url = trim(html_entity_decode($ann->find('a', 0)->href));
@@ -329,7 +374,7 @@ queue_job('crawl_okcoin_announcement', function ()
             crawl_announcement_save_and_send_slack($title, $url, 'okcoin');
         }
     } catch (Exception $ex) {
-        slack_say_to_smarty_dc('[okcoin] 数据抓取出问题了');
+        slack_say_to_smarty_ds('[okcoin] 数据抓取出问题了');
         throw $ex;
     }
 
@@ -353,6 +398,11 @@ queue_job('crawl_huobi_announcement', function ()
         $anns = $dom->find('.notice li');
         $anns = array_reverse($anns);
 
+        if (! count($anns))
+        {
+            slack_say_to_smarty_ds('[huobi] 未获取到数据');
+        }
+
         foreach ($anns as $ann) {
 
             $url = $domain.trim(html_entity_decode($ann->find('a', 0)->href));
@@ -365,7 +415,7 @@ queue_job('crawl_huobi_announcement', function ()
             crawl_announcement_save_and_send_slack($title, $url, 'huobi');
         }
     } catch (Exception $ex) {
-        slack_say_to_smarty_dc('[huobi] 数据抓取出问题了');
+        slack_say_to_smarty_ds('[huobi] 数据抓取出问题了');
         throw $ex;
     }
 
@@ -389,6 +439,11 @@ queue_job('crawl_yuanbao_announcement', function ()
         $anns = $dom->find('#list li a');
         $anns = array_reverse($anns);
 
+        if (! count($anns))
+        {
+            slack_say_to_smarty_ds('[yuanbao] 未获取到数据');
+        }
+
         foreach ($anns as $ann) {
 
             $url = $domain.trim($ann->href);
@@ -403,7 +458,7 @@ queue_job('crawl_yuanbao_announcement', function ()
             crawl_announcement_save_and_send_slack($title, $url, 'yuanbao');
         }
     } catch (Exception $ex) {
-        slack_say_to_smarty_dc('[yuanbao] 数据抓取出问题了');
+        slack_say_to_smarty_ds('[yuanbao] 数据抓取出问题了');
         throw $ex;
     }
 
