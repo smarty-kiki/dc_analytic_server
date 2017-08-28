@@ -18,6 +18,7 @@ queue_job('crawl_yunbi_k', function ($data)
     $table = crawl_yunbi_k_table($market, $period);
 
     $last_info = db_simple_query_first($table, [], 'order by at desc');
+    $last_info = db_simple_query_first($table, ['at <' => $last_info['at']], 'order by at desc');
 
     $last_timestamp = 1262275200; // 2010-01-01 00:00:00
     if ($last_info) {
