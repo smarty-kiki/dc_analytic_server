@@ -53,6 +53,10 @@ queue_job('crawl_jubi_announcement', function ()
             $url = trim($domain.$ann->href);
             $title= trim($ann->plaintext);
 
+            if (str_ireplace(['上线', '开放'], '', $title) == $title) {
+                continue;
+            }
+
             crawl_announcement_save_and_send_slack($title, $url, 'jubi');
         }
     } catch (Exception $ex) {
