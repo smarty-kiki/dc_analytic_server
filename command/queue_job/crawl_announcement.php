@@ -30,7 +30,7 @@ queue_job('crawl_jubi_announcement', function ()
     try {
         $domain = 'https://www.jubi.com';
 
-        $html = remote_get($domain.'/gonggao/', 10);
+        $html = remote_get($domain.'/blocknotice/', 10);
 
         if (! $html) {
             return false;
