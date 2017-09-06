@@ -147,3 +147,5 @@ DROP TABLE IF EXISTS `crawler_yunbi_cdtcny_k_30`;
 DROP TABLE IF EXISTS `crawler_yunbi_cdtcny_k_60`;
 DROP TABLE IF EXISTS `crawler_yunbi_cdtcny_k_120`;
 DROP TABLE IF EXISTS `crawler_yunbi_cdtcny_k_240`;
+
+# down
