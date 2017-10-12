@@ -27,6 +27,8 @@ abstract class entity implements JsonSerializable, Serializable
         return null;
     }
 
+    abstract public static function create();
+
     protected static function init()
     {
         $static = new static();
@@ -160,7 +162,10 @@ abstract class entity implements JsonSerializable, Serializable
         }
 
         if (array_key_exists($property, $this->relationship_refs)) {
-            return $this->relationship_refs[$property]->update($value, $this);
+
+            $this->relationship_refs[$property]->update($value, $this);
+
+            return $this->relationships[$property] = $value;
         }
 
         if (array_key_exists($property, $this->attributes)) {
@@ -702,7 +707,7 @@ function local_cache_flush_all()
 {
     $cached = _local_cache();
 
-    _local_cache([]);
+    local_cache_delete_all();
 
     return $cached;
 }
