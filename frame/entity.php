@@ -462,14 +462,10 @@ class dao
     public function find_all_by_column(array $columns = [])
     {/*{{{*/
         if ($columns) {
-            $where = '';
-            foreach ($columns as $column => $value) {
-                $bind = ":$column";
-                $where .= " $column = $bind";
-                $binds[$bind] = $value;
-            }
 
-            return $this->find_all_by_sql('select * from `'.$this->table_name."`$where order by id", $binds);
+            list($where, $binds) = db_simple_where_sql($columns);
+
+            return $this->find_all_by_sql('select * from `'.$this->table_name."` where $where order by id", $binds);
         } else {
             return $this->find_all();
         }
