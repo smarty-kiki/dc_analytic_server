@@ -7,18 +7,18 @@ function crawler_bittrex_abnormal_volume_table()
 
 function crawler_bittrex_abnormal_volume_slack_save_and_send_slack($symbol, $rank, $volume, $volume_at, $before_avg_volume, $description)
 {/*{{{*/
-    if (! $ann = db_simple_query_first(crawler_bittrex_abnormal_volume_table(), ['symbol' => $symbol, 'volume_at' => $volume_at])) {
-        db_simple_insert(crawler_bittrex_abnormal_volume_table(), [
-            'symbol' => $symbol,
-            'volume' => $volume,
-            'volume_at' => $volume_at,
-            'before_avg_volume' => $before_avg_volume,
-            'description' => $description,
-            'rank' => $rank,
-            'at' => now(),
-        ]);
+    if (strtotime($volume_at) > strtotime(now('-1 hours'))) {
+        if (! $ann = db_simple_query_first(crawler_bittrex_abnormal_volume_table(), ['symbol' => $symbol, 'volume_at' => $volume_at])) {
+            db_simple_insert(crawler_bittrex_abnormal_volume_table(), [
+                'symbol' => $symbol,
+                'volume' => $volume,
+                'volume_at' => $volume_at,
+                'before_avg_volume' => $before_avg_volume,
+                'description' => $description,
+                'rank' => $rank,
+                'at' => now(),
+            ]);
 
-        if (strtotime($volume_at) > strtotime(now('-1 hours'))) {
             slack_say_to_smarty_ds($description);
         }
     }
