@@ -1,4 +1,3 @@
 <?php
 
-include QUEUE_JOB_DIR.'/crawl_announcement.php';
-include QUEUE_JOB_DIR.'/crawl_ico.php';
+include QUEUE_JOB_DIR.'/crawler_abnormal_volume.php';
