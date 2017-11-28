@@ -83,8 +83,8 @@ queue_job('crawler_bittrex_abnormal_volume_single', function ($data)
 
                 if ($btc_volume > $btc_avg_volume * 4) {
                     crawler_bittrex_abnormal_volume_slack_save_and_send_slack($symbol, $rank, $btc_volume, now($tick['T'].' +8 hours'), $btc_avg_volume, 
-                        '*#'.$rank.' '.$symbol.'*'
-                        ."\n*".now($tick['T'].' +8 hours').' 5分钟交易量 '.$btc_volume.'*'
+                        '*#'.$rank.' '.$symbol.' '.now($tick['T'].' +8 hours').'*'
+                        ."\n*5分钟交易量 ".$btc_volume.'*'
                         ."\n前".$step.'柱平均交易量: '.$btc_avg_volume
                         ."\n前".$step.'柱明细: '.implode(' ', $bv_result)
                     );
