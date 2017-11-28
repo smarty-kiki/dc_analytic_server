@@ -86,7 +86,7 @@ queue_job('crawler_bittrex_abnormal_volume_single', function ($data)
                         '*#'.$rank.' '.$symbol.' '.now($tick['T'].' +8 hours', 'm-d H:i:s').'*'
                         ."\n*5分钟交易量 ".$btc_volume.'*'
                         ."\n前".$step.'柱平均交易量: '.$btc_avg_volume
-                        ."\n前".$step."柱明细:\n".implode("\n  ", $bv_result)
+                        ."\n前".$step."柱明细:\n  ".implode("\n  ", $bv_result)
                     );
                 }
             }
