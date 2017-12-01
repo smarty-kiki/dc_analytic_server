@@ -49,7 +49,7 @@ queue_job('crawler_bittrex_abnormal_volume', function ()
                 'percent_change_1h' => $info['percent_change_1h'],
                 'percent_change_24h' => $info['percent_change_24h'],
             ]);
-            slack_say_to_smarty_ds(json_encode($info));
+            slack_say_to_smarty_ds(json_encode($info['symbol']));
         }
     } catch (Exception $ex) {
         slack_say_to_smarty_ds($ex->getMessage());
