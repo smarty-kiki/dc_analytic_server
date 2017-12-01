@@ -43,11 +43,15 @@ queue_job('crawler_bittrex_abnormal_volume', function ()
         }
 
         foreach ($market_infos_indexed_by_symbol as $symbol => $info) {
-            queue_push('crawler_bittrex_abnormal_volume_single', ['symbol' => $symbol, 'rank' => $ranks[$symbol]]);
+            queue_push('crawler_bittrex_abnormal_volume_single', [
+                'symbol' => $symbol,
+                'rank' => $ranks[$symbol],
+                'percent_change_1h' => $info['percent_change_1h'],
+                'percent_change_24h' => $info['percent_change_24h'],
+            ]);
         }
     } catch (Exception $ex) {
         slack_say_to_smarty_ds($ex->getMessage());
-        throw $ex;
     }
 
     return true;
@@ -60,6 +64,8 @@ queue_job('crawler_bittrex_abnormal_volume_single', function ($data)
 
         $symbol = $data['symbol'];
         $rank = $data['rank'];
+        $percent_change_1h = $data['percent_change_1h'];
+        $percent_change_24h = $data['percent_change_24h'];
 
         // 拉币网数据
         $res = remote_get_json('https://bittrex.com/Api/v2.0/pub/market/GetTicks?marketName='.$symbol.'&tickInterval=fiveMin', 10);
@@ -81,19 +87,20 @@ queue_job('crawler_bittrex_abnormal_volume_single', function ($data)
 
                 $btc_avg_volume = array_sum($bv_result) / count($bv_result);
 
-                if ($btc_volume > $btc_avg_volume * 6 && $btc_volume > 3) {
+                if ($btc_volume > $btc_avg_volume * 6 && $btc_volume > 1) {
                     crawler_bittrex_abnormal_volume_slack_save_and_send_slack($symbol, $rank, $btc_volume, now($tick['T'].' +8 hours'), $btc_avg_volume, 
-                        '*#'.$rank.' '.$symbol.' '.now($tick['T'].' +8 hours', 'm-d H:i:s').'*'
-                        ."\n*5分钟交易量 ".$btc_volume.'*'
-                        ."\n前".$step.'柱平均交易量: '.$btc_avg_volume
-                        ."\n前".$step."柱明细:\n  ".implode("\n  ", $bv_result)
+                        '*#'.$rank.' '.$symbol.' '.now($tick['T'].' +8 hours', 'm/d H:i').'*'
+                        ."\n*5 分钟交易量 ".$btc_volume.'*'
+                        ."\n1 小时涨幅 ".$percent_change_1h
+                        ."\n24 小时涨幅 ".$percent_change_24h
+                        ."\n前 ".$step.' 柱平均交易量 '.$btc_avg_volume
+                        ."\n前 ".$step." 柱明细:\n  ".implode("\n  ", $bv_result)
                     );
                 }
             }
         }
     } catch (Exception $ex) {
         slack_say_to_smarty_ds($ex->getMessage());
-        throw $ex;
     }
 
     return true;
