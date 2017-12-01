@@ -91,8 +91,8 @@ queue_job('crawler_bittrex_abnormal_volume_single', function ($data)
                     crawler_bittrex_abnormal_volume_slack_save_and_send_slack($symbol, $rank, $btc_volume, now($tick['T'].' +8 hours'), $btc_avg_volume, 
                         '*#'.$rank.' '.$symbol.' '.now($tick['T'].' +8 hours', 'm/d H:i').'*'
                         ."\n*5 分钟交易量 ".$btc_volume.'*'
-                        ."\n1 小时涨幅 ".$percent_change_1h
-                        ."\n24 小时涨幅 ".$percent_change_24h
+                        ."\n1 小时涨幅 ".$percent_change_1h.'%'
+                        ."\n24 小时涨幅 ".$percent_change_24h.'%'
                         ."\n前 ".$step.' 柱平均交易量 '.$btc_avg_volume
                         ."\n前 ".$step." 柱明细:\n  ".implode("\n  ", $bv_result)
                     );
