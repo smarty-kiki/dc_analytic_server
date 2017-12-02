@@ -7,20 +7,18 @@ function crawler_bittrex_abnormal_volume_table()
 
 function crawler_bittrex_abnormal_volume_slack_save_and_send_slack($symbol, $rank, $volume, $volume_at, $before_avg_volume, $description)
 {/*{{{*/
-    if (strtotime($volume_at) > strtotime(now('-1 hours'))) {
-        if (! $ann = db_simple_query_first(crawler_bittrex_abnormal_volume_table(), ['symbol' => $symbol, 'volume_at' => $volume_at])) {
-            db_simple_insert(crawler_bittrex_abnormal_volume_table(), [
-                'symbol' => $symbol,
-                'volume' => $volume,
-                'volume_at' => $volume_at,
-                'before_avg_volume' => $before_avg_volume,
-                'description' => $description,
-                'rank' => $rank,
-                'at' => now(),
-            ]);
+    if (! $ann = db_simple_query_first(crawler_bittrex_abnormal_volume_table(), ['symbol' => $symbol, 'volume_at' => $volume_at])) {
+        db_simple_insert(crawler_bittrex_abnormal_volume_table(), [
+            'symbol' => $symbol,
+            'volume' => $volume,
+            'volume_at' => $volume_at,
+            'before_avg_volume' => $before_avg_volume,
+            'description' => $description,
+            'rank' => $rank,
+            'at' => now(),
+        ]);
 
-            slack_say_to_smarty_ds($description);
-        }
+        slack_say_to_smarty_ds($description);
     }
 }/*}}}*/
 
@@ -46,8 +44,6 @@ queue_job('crawler_bittrex_abnormal_volume', function ()
             queue_push('crawler_bittrex_abnormal_volume_single', [
                 'symbol' => $symbol,
                 'rank' => $ranks[$symbol],
-                'percent_change_1h' => $info['percent_change_1h'],
-                'percent_change_24h' => $info['percent_change_24h'],
             ]);
         }
     } catch (Exception $ex) {
@@ -64,8 +60,6 @@ queue_job('crawler_bittrex_abnormal_volume_single', function ($data)
 
         $symbol = $data['symbol'];
         $rank = $data['rank'];
-        $percent_change_1h = $data['percent_change_1h'];
-        $percent_change_24h = $data['percent_change_24h'];
 
         // 拉币网数据
         $res = remote_get_json('https://bittrex.com/Api/v2.0/pub/market/GetTicks?marketName='.$symbol.'&tickInterval=fiveMin', 10);
@@ -74,28 +68,42 @@ queue_job('crawler_bittrex_abnormal_volume_single', function ($data)
 
             $result = $res['result'];
 
+            $total_count = count($result);
+
             foreach ($result as $index => $tick) {
-                if ($index < 6) {
-                    continue;
-                }
 
-                $btc_volume = (float) $tick['BV'];
+                if ($index > $total_count - 12) { // 一小时内的
 
-                $tmp_result = array_slice($result, $index - $step, $step);
+                    $btc_volume = (float) $tick['BV'];
 
-                $bv_result = array_fetch($tmp_result, 'BV');
+                    $tmp_result = array_slice($result, $index - $step, $step);
 
-                $btc_avg_volume = array_sum($bv_result) / count($bv_result);
+                    $bv_result = array_fetch($tmp_result, 'BV');
 
-                if ($btc_volume > $btc_avg_volume * 6 && $btc_volume > 5) {
-                    crawler_bittrex_abnormal_volume_slack_save_and_send_slack($symbol, $rank, $btc_volume, now($tick['T'].' +8 hours'), $btc_avg_volume, 
-                        '*#'.$rank.' '.$symbol.' '.now($tick['T'].' +8 hours', 'm/d H:i').'*'
-                        ."\n*5 分钟交易量 ".$btc_volume.'*'
-                        ."\n1 小时涨幅 ".$percent_change_1h.'%'
-                        ."\n24 小时涨幅 ".$percent_change_24h.'%'
-                        ."\n前 ".$step.' 柱平均交易量 '.$btc_avg_volume
-                        ."\n前 ".$step." 柱明细:\n  ".implode("\n  ", $bv_result)
-                    );
+                    $btc_avg_volume = array_sum($bv_result) / count($bv_result);
+
+                    if ($btc_volume > $btc_avg_volume * 6 && $btc_volume > 5) {
+
+
+                        $percent_change_1h = (($btc_volume - $result[$index - 12]['BV']) /$result[$index - 12]['BV'] ) / 100;
+                        $percent_change_24h = (($btc_volume - $result[$index - 288]['BV']) /$result[$index - 288]['BV'] ) / 100;
+
+                        $high_price = (float) $tick['H'];
+                        $h_result = array_fetch($tmp_result, 'H');
+                        $max_h_result = max($h_result);
+                        $highest_price_percent_change_in_24h = (($high_price - $max_h_result) /$max_h_result) / 100;
+
+                        crawler_bittrex_abnormal_volume_slack_save_and_send_slack($symbol, $rank, $btc_volume, now($tick['T'].' +8 hours'), $btc_avg_volume, 
+                            '*#'.$rank.' '.$symbol.' '.now($tick['T'].' +8 hours', 'm/d H:i').'*'
+                            ."\n*5 分钟交易量 ".$btc_volume.'*'
+                            ."\n1 小时涨幅 ".$percent_change_1h.'%'
+                            ."\n24 小时涨幅 ".$percent_change_24h.'%'
+                            ."\n相比 24 小时内最高面值 ".$highest_price_percent_change_in_24h.'%'
+                            ."\n前 ".$step.' 柱平均交易量 '.$btc_avg_volume
+                            ."\n前 ".$step." 柱明细:\n  ".implode("\n  ", $bv_result)
+                        );
+
+                    }
                 }
             }
         }
