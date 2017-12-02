@@ -85,13 +85,13 @@ queue_job('crawler_bittrex_abnormal_volume_single', function ($data)
                     if ($btc_volume > $btc_avg_volume * 6 && $btc_volume > 5) {
 
 
-                        $percent_change_1h = (($btc_volume - $result[$index - 12]['BV']) /$result[$index - 12]['BV'] ) / 100;
-                        $percent_change_24h = (($btc_volume - $result[$index - 288]['BV']) /$result[$index - 288]['BV'] ) / 100;
+                        $percent_change_1h = round((($btc_volume - $result[$index - 12]['BV']) /$result[$index - 12]['BV'] ) * 100, 1);
+                        $percent_change_24h = round((($btc_volume - $result[$index - 288]['BV']) /$result[$index - 288]['BV'] ) * 100, 1);
 
                         $high_price = (float) $tick['H'];
                         $h_result = array_fetch($tmp_result, 'H');
                         $max_h_result = max($h_result);
-                        $highest_price_percent_change_in_24h = (($high_price - $max_h_result) /$max_h_result) / 100;
+                        $highest_price_percent_change_in_24h = round((($high_price - $max_h_result) /$max_h_result) * 100, 1);
 
                         crawler_bittrex_abnormal_volume_slack_save_and_send_slack($symbol, $rank, $btc_volume, now($tick['T'].' +8 hours'), $btc_avg_volume, 
                             '*#'.$rank.' '.$symbol.' '.now($tick['T'].' +8 hours', 'm/d H:i').'*'
