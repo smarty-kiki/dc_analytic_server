@@ -84,11 +84,11 @@ queue_job('crawler_bittrex_abnormal_volume_single', function ($data)
 
                     if ($btc_volume > $btc_avg_volume * 6 && $btc_volume > 5) {
 
-
-                        $percent_change_1h = round((($btc_volume - $result[$index - 12]['BV']) /$result[$index - 12]['BV'] ) * 100, 1);
-                        $percent_change_24h = round((($btc_volume - $result[$index - 288]['BV']) /$result[$index - 288]['BV'] ) * 100, 1);
-
                         $high_price = (float) $tick['H'];
+
+                        $percent_change_1h = round((($high_price - $result[$index - 12]['H']) /$result[$index - 12]['H'] ) * 100, 1);
+                        $percent_change_24h = round((($high_price - $result[$index - 288]['H']) /$result[$index - 288]['H'] ) * 100, 1);
+
                         $h_result = array_fetch($tmp_result, 'H');
                         $max_h_result = max($h_result);
                         $highest_price_percent_change_in_24h = round((($max_h_result - $high_price) /$max_h_result) * 100, 1);
