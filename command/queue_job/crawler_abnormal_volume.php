@@ -82,7 +82,7 @@ queue_job('crawler_bittrex_abnormal_volume_single', function ($data)
 
                     $btc_avg_volume = array_sum($bv_result) / count($bv_result);
 
-                    if ($btc_volume > $btc_avg_volume * 6 && $btc_volume > 5) {
+                    if ($btc_volume > $btc_avg_volume * 6 && $btc_volume > 10) {
 
                         $high_price = (float) $tick['H'];
 
