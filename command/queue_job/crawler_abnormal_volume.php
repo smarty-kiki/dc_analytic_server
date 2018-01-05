@@ -68,40 +68,43 @@ queue_job('crawler_bittrex_abnormal_volume_single', function ($data)
 
             $result = $res['result'];
 
-            $result = array_slice($result, -12, 12);
+            $total_count = count($result);
 
             foreach ($result as $index => $tick) {
 
-                $btc_volume = (float) $tick['BV'];
+                if ($index > $total_count - 12) { // 一小时内的
 
-                $tmp_result = array_slice($result, $index - $step, $step);
+                    $btc_volume = (float) $tick['BV'];
 
-                $bv_result = array_fetch($tmp_result, 'BV');
+                    $tmp_result = array_slice($result, $index - $step, $step);
 
-                $btc_avg_volume = array_sum($bv_result) / count($bv_result);
+                    $bv_result = array_fetch($tmp_result, 'BV');
 
-                if ($btc_volume > $btc_avg_volume * 6 && $btc_volume > 10) {
+                    $btc_avg_volume = array_sum($bv_result) / count($bv_result);
 
-                    $high_price = (float) $tick['H'];
+                    if ($btc_volume > $btc_avg_volume * 6 && $btc_volume > 10) {
 
-                    $percent_change_1h = round((($high_price - $result[$index - 12]['H']) /$result[$index - 12]['H'] ) * 100, 1);
-                    $percent_change_24h = round((($high_price - $result[$index - 288]['H']) /$result[$index - 288]['H'] ) * 100, 1);
+                        $high_price = (float) $tick['H'];
 
-                    $tmp_result = array_slice($result, $index - 288, 288);
-                    $h_result = array_fetch($tmp_result, 'H');
+                        $percent_change_1h = round((($high_price - $result[$index - 12]['H']) /$result[$index - 12]['H'] ) * 100, 1);
+                        $percent_change_24h = round((($high_price - $result[$index - 288]['H']) /$result[$index - 288]['H'] ) * 100, 1);
 
-                    $max_h_result = max($h_result);
-                    $highest_price_percent_change_in_24h = round((($high_price - $max_h_result) /$max_h_result) * 100, 1);
+                        $tmp_result = array_slice($result, $index - 288, 288);
+                        $h_result = array_fetch($tmp_result, 'H');
 
-                    crawler_bittrex_abnormal_volume_slack_save_and_send_slack($symbol, $rank, $btc_volume, now($tick['T'].' +8 hours'), $btc_avg_volume, 
-                        '*#'.$rank.' '.$symbol.' 币网 '.now($tick['T'].' +8 hours', 'H:i').'*'
-                        ."\n*5 分钟交易量 ".$btc_volume.'*'
-                        ."\n1 小时涨幅 ".$percent_change_1h.'%'
-                        ."\n24 小时涨幅 ".$percent_change_24h.'%'
-                        ."\n相比 24 小时内最高面值 ".$highest_price_percent_change_in_24h.'%'
-                        ."\n前 ".$step.' 柱平均交易量 '.$btc_avg_volume
-                        ."\n前 ".$step." 柱明细:\n  ".implode("\n  ", $bv_result)
-                    );
+                        $max_h_result = max($h_result);
+                        $highest_price_percent_change_in_24h = round((($high_price - $max_h_result) /$max_h_result) * 100, 1);
+
+                        crawler_bittrex_abnormal_volume_slack_save_and_send_slack($symbol, $rank, $btc_volume, now($tick['T'].' +8 hours'), $btc_avg_volume, 
+                            '*#'.$rank.' '.$symbol.' 币网 '.now($tick['T'].' +8 hours', 'H:i').'*'
+                            ."\n*5 分钟交易量 ".$btc_volume.'*'
+                            ."\n1 小时涨幅 ".$percent_change_1h.'%'
+                            ."\n24 小时涨幅 ".$percent_change_24h.'%'
+                            ."\n相比 24 小时内最高面值 ".$highest_price_percent_change_in_24h.'%'
+                            ."\n前 ".$step.' 柱平均交易量 '.$btc_avg_volume
+                            ."\n前 ".$step." 柱明细:\n  ".implode("\n  ", $bv_result)
+                        );
+                    }
                 }
             }
         }
