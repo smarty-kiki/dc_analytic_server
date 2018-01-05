@@ -62,50 +62,47 @@ queue_job('crawler_bittrex_abnormal_volume_single', function ($data)
         $rank = $data['rank'];
 
         // 拉币网数据
-        $res = remote_get_json('https://bittrex.com/Api/v2.0/pub/market/GetTicks?marketName='.$symbol.'&tickInterval=fiveMin', 10);
+        //$res = remote_get_json('https://bittrex.com/Api/v2.0/pub/market/GetTicks?marketName='.$symbol.'&tickInterval=fiveMin', 10);
+        $res = remote_get_json('https://bittrex.com/Api/v2.0/pub/market/GetLatestTick?marketName='.$symbol.'&tickInterval=fiveMin', 10);
 
         if ($res['success']) {
 
             $result = $res['result'];
 
-            $total_count = count($result);
+            $result = array_slice($result, -12, 12);
 
             foreach ($result as $index => $tick) {
 
-                if ($index > $total_count - 12) { // 一小时内的
+                $btc_volume = (float) $tick['BV'];
 
-                    $btc_volume = (float) $tick['BV'];
+                $tmp_result = array_slice($result, $index - $step, $step);
 
-                    $tmp_result = array_slice($result, $index - $step, $step);
+                $bv_result = array_fetch($tmp_result, 'BV');
 
-                    $bv_result = array_fetch($tmp_result, 'BV');
+                $btc_avg_volume = array_sum($bv_result) / count($bv_result);
 
-                    $btc_avg_volume = array_sum($bv_result) / count($bv_result);
+                if ($btc_volume > $btc_avg_volume * 6 && $btc_volume > 10) {
 
-                    if ($btc_volume > $btc_avg_volume * 6 && $btc_volume > 10) {
+                    $high_price = (float) $tick['H'];
 
-                        $high_price = (float) $tick['H'];
+                    $percent_change_1h = round((($high_price - $result[$index - 12]['H']) /$result[$index - 12]['H'] ) * 100, 1);
+                    $percent_change_24h = round((($high_price - $result[$index - 288]['H']) /$result[$index - 288]['H'] ) * 100, 1);
 
-                        $percent_change_1h = round((($high_price - $result[$index - 12]['H']) /$result[$index - 12]['H'] ) * 100, 1);
-                        $percent_change_24h = round((($high_price - $result[$index - 288]['H']) /$result[$index - 288]['H'] ) * 100, 1);
+                    $tmp_result = array_slice($result, $index - 288, 288);
+                    $h_result = array_fetch($tmp_result, 'H');
 
-                        $tmp_result = array_slice($result, $index - 288, 288);
-                        $h_result = array_fetch($tmp_result, 'H');
+                    $max_h_result = max($h_result);
+                    $highest_price_percent_change_in_24h = round((($high_price - $max_h_result) /$max_h_result) * 100, 1);
 
-                        $max_h_result = max($h_result);
-                        $highest_price_percent_change_in_24h = round((($high_price - $max_h_result) /$max_h_result) * 100, 1);
-
-                        crawler_bittrex_abnormal_volume_slack_save_and_send_slack($symbol, $rank, $btc_volume, now($tick['T'].' +8 hours'), $btc_avg_volume, 
-                            '*#'.$rank.' '.$symbol.' 币网 '.now($tick['T'].' +8 hours', 'H:i').'*'
-                            ."\n*5 分钟交易量 ".$btc_volume.'*'
-                            ."\n1 小时涨幅 ".$percent_change_1h.'%'
-                            ."\n24 小时涨幅 ".$percent_change_24h.'%'
-                            ."\n相比 24 小时内最高面值 ".$highest_price_percent_change_in_24h.'%'
-                            ."\n前 ".$step.' 柱平均交易量 '.$btc_avg_volume
-                            ."\n前 ".$step." 柱明细:\n  ".implode("\n  ", $bv_result)
-                        );
-
-                    }
+                    crawler_bittrex_abnormal_volume_slack_save_and_send_slack($symbol, $rank, $btc_volume, now($tick['T'].' +8 hours'), $btc_avg_volume, 
+                        '*#'.$rank.' '.$symbol.' 币网 '.now($tick['T'].' +8 hours', 'H:i').'*'
+                        ."\n*5 分钟交易量 ".$btc_volume.'*'
+                        ."\n1 小时涨幅 ".$percent_change_1h.'%'
+                        ."\n24 小时涨幅 ".$percent_change_24h.'%'
+                        ."\n相比 24 小时内最高面值 ".$highest_price_percent_change_in_24h.'%'
+                        ."\n前 ".$step.' 柱平均交易量 '.$btc_avg_volume
+                        ."\n前 ".$step." 柱明细:\n  ".implode("\n  ", $bv_result)
+                    );
                 }
             }
         }
