@@ -62,8 +62,7 @@ queue_job('crawler_bittrex_abnormal_volume_single', function ($data)
         $rank = $data['rank'];
 
         // 拉币网数据
-        //$res = remote_get_json('https://bittrex.com/Api/v2.0/pub/market/GetTicks?marketName='.$symbol.'&tickInterval=fiveMin', 10);
-        $res = remote_get_json('https://bittrex.com/Api/v2.0/pub/market/GetLatestTick?marketName='.$symbol.'&tickInterval=fiveMin', 10);
+        $res = remote_get_json('https://bittrex.com/Api/v2.0/pub/market/GetTicks?marketName='.$symbol.'&tickInterval=fiveMin', 10);
 
         if ($res['success']) {
 
