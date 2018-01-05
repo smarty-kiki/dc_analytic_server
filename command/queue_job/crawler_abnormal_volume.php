@@ -26,7 +26,7 @@ queue_job('crawler_bittrex_abnormal_volume', function ()
 {/*{{{*/
     try {
         // 拉 coinmarketcap 前 200 数据
-        $market_infos = remote_get_json('https://api.coinmarketcap.com/v1/ticker/?limit=200', 10);
+        $market_infos = remote_get_json('https://api.coinmarketcap.com/v1/ticker/?limit=150', 10);
         $market_infos_indexed_by_symbol = [];
         $ranks = [];
 
@@ -96,7 +96,7 @@ queue_job('crawler_bittrex_abnormal_volume_single', function ($data)
                         $highest_price_percent_change_in_24h = round((($high_price - $max_h_result) /$max_h_result) * 100, 1);
 
                         crawler_bittrex_abnormal_volume_slack_save_and_send_slack($symbol, $rank, $btc_volume, now($tick['T'].' +8 hours'), $btc_avg_volume, 
-                            '*#'.$rank.' '.$symbol.' '.now($tick['T'].' +8 hours', 'm/d H:i').'*'
+                            '*#'.$rank.' '.$symbol.' 币网 '.now($tick['T'].' +8 hours', 'H:i').'*'
                             ."\n*5 分钟交易量 ".$btc_volume.'*'
                             ."\n1 小时涨幅 ".$percent_change_1h.'%'
                             ."\n24 小时涨幅 ".$percent_change_24h.'%'
