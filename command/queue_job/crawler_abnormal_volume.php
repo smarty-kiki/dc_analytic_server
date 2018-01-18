@@ -146,9 +146,9 @@ queue_job('crawler_binance_abnormal_volume_single', function ($data)
 
                     $tmp_result = array_slice($result, $index - $step, $step);
 
-                    $bv_result = array_map($tmp_result, function ($v) {
+                    $bv_result = array_map(function ($v) {
                         return (float) ($v[5] * $v[3]);
-                    });
+                    }, $tmp_result);
 
                     $btc_avg_volume = array_sum($bv_result) / count($bv_result);
 
