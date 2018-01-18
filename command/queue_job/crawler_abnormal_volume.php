@@ -166,7 +166,7 @@ queue_job('crawler_binance_abnormal_volume_single', function ($data)
                         $highest_price_percent_change_in_24h = round((($high_price - $max_h_result) /$max_h_result) * 100, 1);
 
                         crawler_bittrex_abnormal_volume_slack_save_and_send_slack($symbol, $rank, $btc_volume, now(($tick[6] / 1000)), $btc_avg_volume, 
-                            '*#'.$rank.' '.$symbol.' 币安 '.now(($tick[6] / 1000), 'H:i').'*'
+                            '*#'.$rank.' BTC-'.$data['symbol'].' 币安 '.now(($tick[6] / 1000), 'H:i').'*'
                             ."\n*5 分钟交易量 ".$btc_volume.'*'
                             ."\n1 小时涨幅 ".$percent_change_1h.'%'
                             ."\n24 小时涨幅 ".$percent_change_24h.'%'
