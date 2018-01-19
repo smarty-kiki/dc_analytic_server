@@ -53,6 +53,10 @@ queue_job('crawler_bittrex_abnormal_volume', function ()
                 'symbol' => $symbol,
                 'rank' => $ranks[$symbol],
             ]);
+            queue_push('crawler_bitfinex_abnormal_volume_single', [
+                'symbol' => $symbol,
+                'rank' => $ranks[$symbol],
+            ]);
         }
     } catch (Exception $ex) {
         slack_say_to_smarty_ds($ex->getMessage());
