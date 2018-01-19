@@ -138,7 +138,7 @@ queue_job('crawler_binance_abnormal_volume_single', function ($data)
         // 拉币安数据
         $res = remote_get_json('https://api.binance.com/api/v1/klines?symbol='.$symbol.'&interval=5m&limit=300', 10);
 
-        if (! array_key_exists('code', $res)) {
+        if ((! empty($res)) && ! array_key_exists('code', $res)) {
 
             array_pop($res);
 
@@ -204,7 +204,7 @@ queue_job('crawler_okex_abnormal_volume_single', function ($data)
         // 拉币安数据
         $res = remote_get_json('https://www.okex.com/api/v1/kline.do?symbol='.$symbol.'&type=5min&size=300', 10);
 
-        if (! array_key_exists('error_code', $res)) {
+        if ((! empty($res)) && ! array_key_exists('error_code', $res)) {
 
             $result = $res;
 
