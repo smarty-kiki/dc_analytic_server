@@ -119,6 +119,8 @@ queue_job('crawler_bittrex_abnormal_volume_single', function ($data)
                     }
                 }
             }
+        } else {
+            echo $data['symbol']." 请求币网超时\n";
         }
     } catch (Exception $ex) {
         slack_say_to_smarty_ds($ex->getMessage());
@@ -185,6 +187,8 @@ queue_job('crawler_binance_abnormal_volume_single', function ($data)
                     }
                 }
             }
+        } else {
+            echo $data['symbol']." 请求币安超时\n";
         }
     } catch (Exception $ex) {
         slack_say_to_smarty_ds($ex->getMessage());
@@ -249,6 +253,8 @@ queue_job('crawler_okex_abnormal_volume_single', function ($data)
                     }
                 }
             }
+        } else {
+            echo $data['symbol']." 请求 okex 超时\n";
         }
     } catch (Exception $ex) {
         slack_say_to_smarty_ds($ex->getMessage());
@@ -313,6 +319,8 @@ queue_job('crawler_bitfinex_abnormal_volume_single', function ($data)
                     }
                 }
             }
+        } else {
+            echo $data['symbol']." 请求 bitfinex 超时\n";
         }
     } catch (Exception $ex) {
         slack_say_to_smarty_ds($ex->getMessage());
