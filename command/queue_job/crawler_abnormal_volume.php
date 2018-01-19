@@ -268,7 +268,7 @@ queue_job('crawler_bitfinex_abnormal_volume_single', function ($data)
         // 拉币安数据
         $res = remote_get_json('https://api.bitfinex.com/v2/candles/trade:5m:'.$symbol.'/hist?limit=300', 10);
 
-        if (! array_key_exists('error_code', $res)) {
+        if ('error' !== $res[0]) {
 
             $result = $res;
 
