@@ -16,6 +16,7 @@ if_command_not_found(function ($rules, $descriptions) {
 include COMMAND_DIR.'/migrate.php';
 include COMMAND_DIR.'/queue.php';
 include COMMAND_DIR.'/crawler.php';
+include COMMAND_DIR.'/dialogue.php';
 
 // fix
 command_not_found();

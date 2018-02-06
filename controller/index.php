@@ -2,5 +2,5 @@
 
 if_get('/', function ()
 {
-    return 'hello world';
+    dialogue_push(input('uid'), input('msg'));
 });

@@ -500,6 +500,11 @@ function remote_post($url, $data = [], $timeout = 3, $retry = 3, array $headers 
     return $res;
 }/*}}}*/
 
+function remote_post_json($url, $data = [], $timeout = 3, $retry = 3, array $headers = [], array $cookies = [])
+{/*{{{*/
+    return json_decode(remote_post($url, $data, $timeout, $retry, $headers, $cookies), true);
+}/*}}}*/
+
 /**
  * remote_get.
  *
@@ -549,9 +554,9 @@ function remote_get($url, $timeout = 3, $retry = 3, array $headers = [], array $
     return $res;
 }/*}}}*/
 
-function remote_get_json($url, $timeout = 3, $retry = 3, array $headers = [])
+function remote_get_json($url, $timeout = 3, $retry = 3, array $headers = [], array $cookies = [])
 {/*{{{*/
-    return json_decode(remote_get($url, $timeout, $retry, $headers), true);
+    return json_decode(remote_get($url, $timeout, $retry, $headers, $cookies), true);
 }/*}}}*/
 
 function instance($class_name)
