@@ -13,7 +13,7 @@ if_post('/work/receive', function ()
 
     $message_xml = business_wechat_decrypt_message($msg_signature, $timestamp, $nonce, input_post_raw());
 
-    /**kiki*/error_log(print_r($message_xml, true)."\n", 3, '/tmp/error_user.log');exit;
+    $message = simplexml_load_string($message_xml);
 
-    //dialogue_push(input('uid'), input('msg'));
+    dialogue_push((string) $message->FromUserName, (string) $message->Content);
 });
