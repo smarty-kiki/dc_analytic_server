@@ -1,16 +1,15 @@
 <?php
 
-dialogue_topic('帮我查一下 * 的价格', function ($user_id, $message, $time, $symbol) {
+dialogue_topic('查*的价格', function ($user_id, $message, $time, $symbol) {
 
-    dialogue_say($user_id, $symbol.' 涨爆了');
+    $symbol = trim($symbol);
 
-    dialogue_ask_and_wait($user_id, '要按市价买吗', 180, function ($user_id, $message, $time) {
+    $res = remote_get_json("https://bittrex.com/api/v1.1/public/getticker?market=BTC-$symbol");
 
-        if (! stristr($message, '不')) {
-
-            // code here
-            dialogue_say($user_id, '好，下单了');
-        }
-    });
+    if ($res['success']) {
+        dialogue_say($user_id, $res['result']['Last'].' BTC');
+    } else {
+        dialogue_say($user_id, '币网没这个币');
+    }
 
 });

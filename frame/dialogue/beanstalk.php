@@ -211,7 +211,7 @@ function dialogue_ask_and_wait($user_id, $ask, $timeout, closure $action, $confi
 
         cache_increment($user_tube, 1, $timeout);
 
-        call_user_func($action, $user_id, $message, $time);
+        do { } while (! call_user_func($action, $user_id, $message, $time));
 
         cache_delete($user_tube);
 
