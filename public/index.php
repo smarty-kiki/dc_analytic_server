@@ -21,6 +21,10 @@ if_verify(function ($action, $args) {
 
     $data = call_user_func_array($action, $args);
 
+    if (is_string($data)) {
+        return $data;
+    }
+
     header('Content-type: application/json');
 
     return json($data);
@@ -37,6 +41,7 @@ if_not_found(function () {
 });
 
 // init controller
+include CONTROLLER_DIR.'/work.php';
 include CONTROLLER_DIR.'/index.php';
 include CONTROLLER_DIR.'/ical.php';
 
