@@ -84,9 +84,11 @@ function business_wechat_verify_url($msg_signature, $timestamp, $nonce, $echostr
 function business_wechat_prpcrypt_decrypt($encoding_AES_key, $echostr, $corpid)
 {/*{{{*/
     try {
-        $ciphertext_dec = base64_decode($encoding_AES_key);
-        $iv = substr($encoding_AES_key, 0, 16);
-        $decrypted = openssl_decrypt($ciphertext_dec, 'aes-256-cbc', $encoding_AES_key, $options = 1 | OPENSSL_NO_PADDING, $iv);
+        $key = base64_decode($encoding_AES_key);
+
+        $ciphertext_dec = base64_decode($echostr);
+        $iv = substr($key, 0, 16);
+        $decrypted = openssl_decrypt($ciphertext_dec, 'aes-256-cbc', $key, $options = 1 | OPENSSL_NO_PADDING, $iv);
     } catch (Exception $e) {
         throw new Exception('DecryptAESError');
     }
