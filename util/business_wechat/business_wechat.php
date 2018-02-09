@@ -72,8 +72,7 @@ function business_wechat_verify_url($msg_signature, $timestamp, $nonce, $echostr
         return null;
     }
 
-    business_wechat_sha1($token, $timestamp, $nonce, $echostr);
-    $signature = business_wechat_sha1();
+    $signature = business_wechat_sha1($token, $timestamp, $nonce, $echostr);
 
     if ($signature != $sMsgSignature) {
         return null;
