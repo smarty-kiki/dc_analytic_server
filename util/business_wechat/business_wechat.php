@@ -1,12 +1,12 @@
 <?php
 
-define('BUSINESS_WECHAT_CORP_ID', 'wwf3effabd6b904bb2');
+define('BUSINESS_WECHAT_CORPID', 'wwf3effabd6b904bb2');
 
 function _business_wechat_access_token()
 {/*{{{*/
     static $cache_key = 'business_wechat_access_token';
 
-    static $corp_id = BUSINESS_WECHAT_CORP_ID;
+    static $corp_id = BUSINESS_WECHAT_CORPID;
     static $secret = 'z_ol9gewn1L9wVexQACEv64hFhG9LshLf2Uby9wfiDw';
 
     static $access_token = null;
@@ -64,7 +64,7 @@ function business_wechat_get_department_user_list($department_id)
 
 function business_wechat_verify_url($msg_signature, $timestamp, $nonce, $echostr)
 {/*{{{*/
-    static $corpid = BUSINESS_WECHAT_CORP_ID;
+    static $corpid = BUSINESS_WECHAT_CORPID;
     static $token = 'beDAqA5M1Q1U';
     static $encoding_AES_key = 'MWSuUOIbQrxgjGQBHG077RHJN4GybzEOyjxhMX1TOhG';
 
@@ -106,7 +106,7 @@ function business_wechat_prpcrypt_decrypt($encoding_AES_key, $echostr, $corpid)
     }
 
     if ($from_corpid != $corpid) {
-        throw new Exception('ValidateCorpidError');
+        throw new Exception("ValidateCorpidError $from_corpid != $corpid");
     }
 
     return $xml_content;
