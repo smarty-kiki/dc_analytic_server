@@ -2,5 +2,5 @@
 
 if_get('/', function ()
 {
-    return 'hello world';
+    return coinmarketcap_get_tickers();
 });

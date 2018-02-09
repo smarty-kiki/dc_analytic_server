@@ -9,7 +9,7 @@ function coinmarketcap_get_tickers()
     }
 
     if (empty($tickers)) {
-        $tmp_tickers = remote_get_json(' https://api.coinmarketcap.com/v1/ticker/?convert=CNY', 10);
+        $tmp_tickers = remote_get_json('https://api.coinmarketcap.com/v1/ticker/?convert=CNY', 10);
 
         foreach ($tmp_tickers as $ticker) {
             $tickers[$ticker['symbol']] = [
