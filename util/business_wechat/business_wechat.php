@@ -64,7 +64,7 @@ function business_wechat_get_department_user_list($department_id)
 
 function business_wechat_verify_url($msg_signature, $timestamp, $nonce, $echostr)
 {/*{{{*/
-    static $corp_id = BUSINESS_WECHAT_CORP_ID;
+    static $corpid = BUSINESS_WECHAT_CORP_ID;
     static $token = 'beDAqA5M1Q1U';
     static $encoding_AES_key = 'MWSuUOIbQrxgjGQBHG077RHJN4GybzEOyjxhMX1TOhG';
 
@@ -78,10 +78,10 @@ function business_wechat_verify_url($msg_signature, $timestamp, $nonce, $echostr
         return null;
     }
 
-    return business_wechat_prpcrypt_decrypt($encoding_AES_key, $echostr);
+    return business_wechat_prpcrypt_decrypt($encoding_AES_key, $echostr, $corpid);
 }/*}}}*/
 
-function business_wechat_prpcrypt_decrypt($encoding_AES_key, $echostr)
+function business_wechat_prpcrypt_decrypt($encoding_AES_key, $echostr, $corpid)
 {/*{{{*/
     try {
         $ciphertext_dec = base64_decode($encoding_AES_key);
