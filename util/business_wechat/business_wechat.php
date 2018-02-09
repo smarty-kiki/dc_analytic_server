@@ -1,6 +1,8 @@
 <?php
 
 define('BUSINESS_WECHAT_CORPID', 'wwf3effabd6b904bb2');
+define('BUSINESS_WECHAT_CHAT_API_TOKEN', 'beDAqA5M1Q1U');
+define('BUSINESS_WECHAT_CHAT_API_ENCODING_ASE_KEY', 'MWSuUOIbQrxgjGQBHG077RHJN4GybzEOyjxhMX1TOhG');
 
 function _business_wechat_access_token()
 {/*{{{*/
@@ -65,8 +67,8 @@ function business_wechat_get_department_user_list($department_id)
 function business_wechat_verify_url($msg_signature, $timestamp, $nonce, $echostr)
 {/*{{{*/
     static $corpid = BUSINESS_WECHAT_CORPID;
-    static $token = 'beDAqA5M1Q1U';
-    static $encoding_AES_key = 'MWSuUOIbQrxgjGQBHG077RHJN4GybzEOyjxhMX1TOhG';
+    static $token = BUSINESS_WECHAT_CHAT_API_TOKEN;
+    static $encoding_AES_key = BUSINESS_WECHAT_CHAT_API_ENCODING_ASE_KEY;
 
     if (strlen($encoding_AES_key) != 43) {
         throw new Exception('IllegalAesKey');
@@ -79,6 +81,30 @@ function business_wechat_verify_url($msg_signature, $timestamp, $nonce, $echostr
     }
 
     return business_wechat_prpcrypt_decrypt($encoding_AES_key, $echostr, $corpid);
+}/*}}}*/
+
+function business_wechat_decrypt_message($msg_signature, $timestamp, $nonce, $post_data)
+{/*{{{*/
+    static $corpid = BUSINESS_WECHAT_CORPID;
+    static $token = BUSINESS_WECHAT_CHAT_API_TOKEN;
+    static $encoding_AES_key = BUSINESS_WECHAT_CHAT_API_ENCODING_ASE_KEY;
+
+    if (strlen($encoding_AES_key) != 43) {
+        throw new Exception('IllegalAesKey');
+    }
+
+    $xml = simplexml_load_string($post_data);
+
+    $encrypt_msg = (string) $xml->Encrypt;
+    $touser_name = (string) $xml->ToUserName;
+
+    $signature = business_wechat_sha1($token, $timestamp, $nonce, $encrypt_msg);
+
+    if ($signature != $msg_signature) {
+        throw new Exception('ValidateSignatureError');
+    }
+
+    return business_wechat_prpcrypt_decrypt($encoding_AES_key, $encrypt_msg, $corpid);
 }/*}}}*/
 
 function business_wechat_prpcrypt_decrypt($encoding_AES_key, $echostr, $corpid)
