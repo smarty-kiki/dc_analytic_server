@@ -69,13 +69,13 @@ function business_wechat_verify_url($msg_signature, $timestamp, $nonce, $echostr
     static $encoding_AES_key = 'MWSuUOIbQrxgjGQBHG077RHJN4GybzEOyjxhMX1TOhG';
 
     if (strlen($encoding_AES_key) != 43) {
-        return null;
+        throw new Exception('IllegalAesKey');
     }
 
     $signature = business_wechat_sha1($token, $timestamp, $nonce, $echostr);
 
     if ($signature != $msg_signature) {
-        return null;
+        throw new Exception('ValidateSignatureError');
     }
 
     return business_wechat_prpcrypt_decrypt($encoding_AES_key, $echostr, $corpid);
@@ -88,13 +88,13 @@ function business_wechat_prpcrypt_decrypt($encoding_AES_key, $echostr, $corpid)
         $iv = substr($encoding_AES_key, 0, 16);
         $decrypted = openssl_decrypt($ciphertext_dec, 'aes-256-cbc', $encoding_AES_key, $options = 1 | OPENSSL_NO_PADDING, $iv);
     } catch (Exception $e) {
-        return null;
+        throw new Exception('DecryptAESError');
     }
 
     try {
         $result = business_wechat_pkcs7_decode($decrypted);
         if (strlen($result) < 16) {
-            return null;
+            return '';
         }
         $content = substr($result, 16, strlen($result));
         $len_list = unpack("N", substr($content, 0, 4));
@@ -102,11 +102,11 @@ function business_wechat_prpcrypt_decrypt($encoding_AES_key, $echostr, $corpid)
         $xml_content = substr($content, 4, $xml_len);
         $from_corpid = substr($content, $xml_len + 4);
     } catch (Exception $e) {
-        return null;
+        throw new Exception('IllegalBuffer');
     }
 
     if ($from_corpid != $corpid) {
-        return null;
+        throw new Exception('ValidateCorpidError');
     }
 
     return $xml_content;
@@ -130,6 +130,6 @@ function business_wechat_sha1($token, $timestamp, $nonce, $encrypt_msg)
 
         return sha1($str);
     } catch (Exception $e) {
-        return null;
+        throw new Exception('ComputeSignatureError');;
     }
 }/*}}}*/
