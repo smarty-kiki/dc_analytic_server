@@ -15,5 +15,8 @@ if_post('/work/receive', function ()
 
     $message = simplexml_load_string($message_xml);
 
-    dialogue_push((string) $message->FromUserName, (string) $message->Content);
+    switch ((string) $message->MsgType) {
+    case 'text':
+        dialogue_push((string) $message->FromUserName, (string) $message->Content);
+    }
 });
