@@ -116,13 +116,13 @@ function dialogue_push_for_exists($user_id, $content, $delay = 0, $priority = 10
 function _dialogue_pull($tube, $timeout = null, $config_key = 'default')
 {/*{{{*/
     $fp = _beanstalk_connection($config_key);
-    _beanstalk_watch($fp, DIALOGUE_POOL_TUBE);
+    _beanstalk_watch($fp, $tube);
 
     $job_instance = _beanstalk_reserve($fp, $timeout);
     $id = $job_instance['id'];
 
     _beanstalk_delete($fp, $id);
-    _beanstalk_ignore($fp, DIALOGUE_POOL_TUBE);
+    _beanstalk_ignore($fp, $tube);
 
     return unserialize($job_instance['body']);
 }/*}}}*/
