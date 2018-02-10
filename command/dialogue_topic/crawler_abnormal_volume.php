@@ -26,13 +26,7 @@ dialogue_topic(['查*的资料', '*是什么币', '介绍一下*'], function ($u
 
     } else {
 
-        $res = dialogue_ask_and_wait($user_id, "额，我还不知道 $symbol 是什么", 30);
-
-        if (is_null($res)) {
-            $res = '超时了';
-        }
-
-        dialogue_say($user_id, $res);
+        dialogue_say($user_id, "额，我还不知道 $symbol 是什么");
     }
 
 });
