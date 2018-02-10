@@ -127,6 +127,33 @@ function _dialogue_pull($tube, $timeout = null, $config_key = 'default')
     return unserialize($job_instance['body']);
 }/*}}}*/
 
+function _dialogue_content_match($content, $pattern)
+{/*{{{*/
+    static $match_key = 0;
+    static $catch_key = 1;
+
+    $count = preg_match_all($pattern, $content, $matches = []);
+
+    if (array_key_exists($match_key, $matches)) {
+        if (array_key_exists($catch_key, $matches)) {
+            $res = $matches[$catch_key];
+            if ($res) {
+                return $res;
+            } else {
+                return false;
+            }
+        } else {
+            if ($matches[$match_key]) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    } else {
+        return false;
+    }
+}/*}}}*/
+
 function _dialogue_operator_topic_user($user_id = null)
 {/*{{{*/
     static $container = null;
@@ -227,15 +254,30 @@ function dialogue_watch($config_key = 'default', $memory_limit = 1048576)
     }
 }/*}}}*/
 
-function dialogue_ask_and_wait($user_id, $ask, $timeout, $config_key = 'default')
+function dialogue_ask_and_wait($user_id, $ask, $timeout, $pattern = null, $config_key = 'default')
 {/*{{{*/
-    return _dialogue_operator_waiting_with_user($user_id, $timeout, function () use ($user_id, $ask, $timeout, $config_key) {
+    return _dialogue_operator_waiting_with_user($user_id, $timeout, function () use ($user_id, $ask, $timeout, $pattern, $config_key) {
 
         dialogue_say($user_id, $ask);
 
-        $message = _dialogue_pull(_dialogue_waiting_user_tube($user_id), $timeout, $config_key);
+        for (;;) {
 
-        return $message['content'];
+            $message = _dialogue_pull(_dialogue_waiting_user_tube($user_id), $timeout, $config_key);
+
+            $content = $message['content'];
+
+            if (is_null($pattern)) {
+                return $content;
+            }
+
+            $matched = _dialogue_content_match($content, $pattern);
+
+            if ($matched) {
+                return $matched;
+            } else {
+                /**kiki*/error_log(print_r($content.'未匹配 pattern ', true)."\n", 3, '/tmp/error_user.log');
+            }
+        }
     });
 }/*}}}*/
 
