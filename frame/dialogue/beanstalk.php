@@ -187,13 +187,14 @@ function _dialogue_operator_waiting_with_user($user_id, $timeout, closure $actio
     try {
 
         $res = call_user_func($action);
-        /**kiki*/error_log(print_r($res, true)."\n", 3, '/tmp/error_user.log');
 
     } catch (Exception $ex) {
+        /**kiki*/error_log(print_r($res, true)."\n", 3, '/tmp/error_user.log');
     } finally {
 
         cache_delete($user_tube);
 
+        /**kiki*/error_log(print_r($res, true)."\n", 3, '/tmp/error_user.log');
         return $res;
     }
 }/*}}}*/
