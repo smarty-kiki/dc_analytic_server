@@ -256,9 +256,9 @@ function dialogue_watch($config_key = 'default', $memory_limit = 1048576)
 
 function dialogue_ask_and_wait($user_id, $ask, $pattern = null, $timeout = 60, $config_key = 'default')
 {/*{{{*/
-    return _dialogue_operator_waiting_with_user($user_id, $timeout, function () use ($user_id, $ask, $pattern, $timeout, $config_key) {
+    $timeout_time = time() + $timeout;
 
-        $timeout_time = time() + $timeout;
+    return _dialogue_operator_waiting_with_user($user_id, $timeout, function () use ($timeout_time, $user_id, $ask, $pattern, $config_key) {
 
         dialogue_say($user_id, $ask);
 
