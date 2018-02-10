@@ -23,7 +23,9 @@ dialogue_topic(['查*的资料', '*是什么币', '介绍一下*'], function ($u
     if (array_key_exists($upper_symbol, $tickers)) {
         dialogue_say($user_id, '进这里看 https://www.btc8.io/currency/'.$tickers[$upper_symbol]['name']);
     } else {
-        dialogue_say($user_id, "额，我还不知道 $symbol 是什么");
+        $res = dialogue_ask_and_wait($user_id, "额，我还不知道 $symbol 是什么", 30);
+
+        dialogue_say($user_id, $res);
     }
 
 });

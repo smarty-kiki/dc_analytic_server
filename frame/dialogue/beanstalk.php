@@ -61,7 +61,7 @@ function dialogue_topic_match($content, $topic)
     return [$matched, $args];
 }/*}}}*/
 
-function _dialogue_topic_user_tube($user_id)
+function _dialogue_waiting_user_tube($user_id)
 {/*{{{*/
     return 'dialogue_tube_'.$user_id;
 }/*}}}*/
@@ -92,7 +92,7 @@ function _dialogue_push($user_id, $content, $delay, $priority, $tube, $config_ke
 
 function dialogue_push($user_id, $content, $delay = 0, $priority = 10, $config_key = 'default')
 {/*{{{*/
-    if (cache_get(_dialogue_topic_user_tube($user_id))) {
+    if (cache_get(_dialogue_waiting_user_tube($user_id))) {
         return dialogue_push_for_exists($user_id, $content, $delay, $priority, $config_key);
     } else {
         return dialogue_push_for_new($user_id, $content, $delay, $priority, $config_key);
@@ -106,14 +106,28 @@ function dialogue_push_for_new($user_id, $content, $delay = 0, $priority = 10, $
 
 function dialogue_push_for_exists($user_id, $content, $delay = 0, $priority = 10, $config_key = 'default')
 {/*{{{*/
-    return _dialogue_push($user_id, $content, $delay, $priority, _dialogue_topic_user_tube($user_id), $config_key);
+    return _dialogue_push($user_id, $content, $delay, $priority, _dialogue_waiting_user_tube($user_id), $config_key);
 }/*}}}*/
 
 /**
  * operator
  */
 
-function dialogue_operator_topic_user($user_id = null)
+function _dialogue_pull($tube, $timeout = null, $config_key = 'default')
+{/*{{{*/
+    $fp = _beanstalk_connection($config_key);
+    _beanstalk_watch($fp, DIALOGUE_POOL_TUBE);
+
+    $job_instance = _beanstalk_reserve($fp, $timeout);
+    $id = $job_instance['id'];
+
+    _beanstalk_delete($fp, $id);
+    _beanstalk_ignore($fp, DIALOGUE_POOL_TUBE);
+
+    return unserialize($job_instance['body']);
+}/*}}}*/
+
+function _dialogue_operator_topic_user($user_id = null)
 {/*{{{*/
     static $container = null;
 
@@ -124,24 +138,36 @@ function dialogue_operator_topic_user($user_id = null)
     return $container;
 }/*}}}*/
 
-function dialogue_operator_talking_with_user($user_id, closure $action)
+function _dialogue_operator_talking_with_user($user_id, closure $action)
 {/*{{{*/
-    dialogue_operator_topic_user($user_id);
+    _dialogue_operator_topic_user($user_id);
 
-    call_user_func($action);
+    $res = call_user_func($action);
 
-    dialogue_operator_topic_user(false);
+    _dialogue_operator_topic_user(false);
+
+    return $res;
 }/*}}}*/
 
-function dialogue_operator_wait_user($user_id = null)
+function _dialogue_operator_waiting_with_user($user_id, $timeout, closure $action)
 {/*{{{*/
-    static $container = null;
+    $user_tube = _dialogue_waiting_user_tube($user_id);
 
-    if (! is_null($user_id)) {
-        $container = $user_id;
+    cache_increment($user_tube, 1, $timeout);
+
+    $res = null;
+
+    try {
+
+        $res = call_user_func($action);
+
+    } catch (Exception $ex) {
+    } finally {
+
+        cache_delete($user_tube);
+
+        return $res;
     }
-
-    return $container;
 }/*}}}*/
 
 function dialogue_watch($config_key = 'default', $memory_limit = 1048576)
@@ -155,8 +181,6 @@ function dialogue_watch($config_key = 'default', $memory_limit = 1048576)
     $topics = dialogue_topics();
     $missed_action = dialogue_topic_miss();
 
-    $fp = _beanstalk_connection($config_key);
-
     for (;;) {
 
         if (memory_get_usage(true) > $memory_limit) {
@@ -167,16 +191,11 @@ function dialogue_watch($config_key = 'default', $memory_limit = 1048576)
             break;
         }
 
-        _beanstalk_watch($fp, DIALOGUE_POOL_TUBE);
-        $job_instance = _beanstalk_reserve($fp);
-        $id = $job_instance['id'];
-        $body = unserialize($job_instance['body']);
-        _beanstalk_delete($fp, $id);
-        _beanstalk_ignore($fp, DIALOGUE_POOL_TUBE);
+        $message = _dialogue_pull(DIALOGUE_POOL_TUBE, null, $config_key);
 
-        $user_id = $body['user_id'];
-        $content = $body['content'];
-        $time = $body['time'];
+        $user_id = $message['user_id'];
+        $content = $message['content'];
+        $time = $message['time'];
 
         if (now($time." +1 min") > now()) {
 
@@ -190,7 +209,7 @@ function dialogue_watch($config_key = 'default', $memory_limit = 1048576)
 
                     if ($matched_topic) {
 
-                        dialogue_operator_talking_with_user($user_id, function () use ($info, $user_id, $content, $time, $args) {
+                        _dialogue_operator_talking_with_user($user_id, function () use ($info, $user_id, $content, $time, $args) {
                             call_user_func_array($info['closure'], array_merge([$user_id, $content, $time], $args));
                         });
 
@@ -208,37 +227,16 @@ function dialogue_watch($config_key = 'default', $memory_limit = 1048576)
     }
 }/*}}}*/
 
-function dialogue_ask_and_wait($user_id, $ask, $timeout, closure $action, $config_key = 'default')
+function dialogue_ask_and_wait($user_id, $ask, $timeout, $config_key = 'default')
 {/*{{{*/
-    dialogue_say($user_id, $ask);
+    _dialogue_operator_waiting_with_user($user_id, $timeout, function () use ($user_id, $ask, $timeout, $config_key) {
 
-    $fp = _beanstalk_connection($config_key);
-    $user_tube = _dialogue_topic_user_tube($user_id);
+        dialogue_say($user_id, $ask);
 
-    _beanstalk_watch($fp, $user_tube);
+        $message = _dialogue_pull(_dialogue_waiting_user_tube($user_id), $config_key);
 
-    $job_instance = _beanstalk_reserve($fp, $timeout);
-
-    $id = $job_instance['id'];
-    $body = unserialize($job_instance['body']);
-
-    $user_id = $body['user_id'];
-    $content = $body['content'];
-    $time = $body['time'];
-
-    _beanstalk_delete($fp, $id);
-    _beanstalk_ignore($fp, $user_tube);
-
-    if (now($time." +1 min") > now()) {
-
-        cache_increment($user_tube, 1, $timeout);
-
-        do { } while (! call_user_func($action, $user_id, $content, $time));
-
-        cache_delete($user_tube);
-
-        return true;
-    }
+        return $message['content'];
+    });
 }/*}}}*/
 
 function dialogue_choice_and_wait($user_id, $ask, array $choice, $timeout, closure $action)
