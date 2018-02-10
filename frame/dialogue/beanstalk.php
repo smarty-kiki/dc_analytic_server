@@ -187,6 +187,7 @@ function _dialogue_operator_waiting_with_user($user_id, $timeout, closure $actio
     try {
 
         $res = call_user_func($action);
+        /**kiki*/error_log(print_r($res, true)."\n", 3, '/tmp/error_user.log');
 
     } catch (Exception $ex) {
     } finally {
@@ -265,6 +266,7 @@ function dialogue_ask_and_wait($user_id, $ask, $pattern = null, $timeout = 60, $
         for (;;) {
 
             $timeout = $timeout_time - time();
+            /**kiki*/error_log(print_r($timeout.'超时', true)."\n", 3, '/tmp/error_user.log');
 
             if ($timeout <= 0) {
                 return null;
