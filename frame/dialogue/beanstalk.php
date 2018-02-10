@@ -61,7 +61,7 @@ function dialogue_topic_match($content, $topic)
     return [$matched, $args];
 }/*}}}*/
 
-function _dialogue_user_tube($user_id)
+function _dialogue_topic_user_tube($user_id)
 {/*{{{*/
     return 'dialogue_tube_'.$user_id;
 }/*}}}*/
@@ -92,7 +92,7 @@ function _dialogue_push($user_id, $content, $delay, $priority, $tube, $config_ke
 
 function dialogue_push($user_id, $content, $delay = 0, $priority = 10, $config_key = 'default')
 {/*{{{*/
-    if (cache_get(_dialogue_user_tube($user_id))) {
+    if (cache_get(_dialogue_topic_user_tube($user_id))) {
         return dialogue_push_for_exists($user_id, $content, $delay, $priority, $config_key);
     } else {
         return dialogue_push_for_new($user_id, $content, $delay, $priority, $config_key);
@@ -106,19 +106,49 @@ function dialogue_push_for_new($user_id, $content, $delay = 0, $priority = 10, $
 
 function dialogue_push_for_exists($user_id, $content, $delay = 0, $priority = 10, $config_key = 'default')
 {/*{{{*/
-    return _dialogue_push($user_id, $content, $delay, $priority, _dialogue_user_tube($user_id), $config_key);
+    return _dialogue_push($user_id, $content, $delay, $priority, _dialogue_topic_user_tube($user_id), $config_key);
 }/*}}}*/
 
 /**
  * operator
  */
 
+function dialogue_operator_topic_user($user_id = null)
+{/*{{{*/
+    static $container = null;
+
+    if (! is_null($user_id)) {
+        $container = $user_id;
+    }
+
+    return $container;
+}/*}}}*/
+
+function dialogue_operator_talking_with_user($user_id, closure $action)
+{/*{{{*/
+    dialogue_operator_topic_user($user_id);
+
+    call_user_func($action);
+
+    dialogue_operator_topic_user(false);
+}/*}}}*/
+
+function dialogue_operator_wait_user($user_id = null)
+{/*{{{*/
+    static $container = null;
+
+    if (! is_null($user_id)) {
+        $container = $user_id;
+    }
+
+    return $container;
+}/*}}}*/
+
 function dialogue_watch($config_key = 'default', $memory_limit = 1048576)
 {/*{{{*/
-    $user_id = 0;
     declare(ticks=1);
     $received_signal = false;
-    pcntl_signal(SIGTERM, function () use (&$received_signal, $user_id) {
+    pcntl_signal(SIGTERM, function () use (&$received_signal) {
         $received_signal = true;
     });
 
@@ -150,32 +180,26 @@ function dialogue_watch($config_key = 'default', $memory_limit = 1048576)
 
         if (now($time." +1 min") > now()) {
 
-            $topic_is_missed = true;
+            $matched_topic = false;
 
             foreach ($topics as $info) {
 
                 foreach ((array) $info['topic'] as $topic) {
 
-                    list($matched, $args) = dialogue_topic_match($content, $topic);
+                    list($matched_topic, $args) = dialogue_topic_match($content, $topic);
 
-                    if ($matched) {
+                    if ($matched_topic) {
 
-                        $user_tube = _dialogue_user_tube($user_id);
-
-                        cache_increment($user_tube, 1, $info['timeout']);
-
-                        call_user_func_array($info['closure'], array_merge([$user_id, $content, $time], $args));
-
-                        cache_delete($user_tube);
-
-                        $topic_is_missed = false;
+                        dialogue_operator_talking_with_user($user_id, function () use ($info, $user_id, $content, $time, $args) {
+                            call_user_func_array($info['closure'], array_merge([$user_id, $content, $time], $args));
+                        });
 
                         continue(3);
                     }
                 }
             }
 
-            if ($topic_is_missed) {
+            if (! $matched_topic) {
                 if ($missed_action instanceof closure) {
                     call_user_func($missed_action, $user_id, $content, $time);
                 }
@@ -189,15 +213,11 @@ function dialogue_ask_and_wait($user_id, $ask, $timeout, closure $action, $confi
     dialogue_say($user_id, $ask);
 
     $fp = _beanstalk_connection($config_key);
-    $user_tube = _dialogue_user_tube($user_id);
+    $user_tube = _dialogue_topic_user_tube($user_id);
 
     _beanstalk_watch($fp, $user_tube);
 
-    try {
-        $job_instance = _beanstalk_reserve($fp, $timeout);
-    } catch (Exception $ex) {
-        return false;
-    }
+    $job_instance = _beanstalk_reserve($fp, $timeout);
 
     $id = $job_instance['id'];
     $body = unserialize($job_instance['body']);
@@ -231,14 +251,13 @@ function dialogue_form_and_wait($user_id, $ask, array $form, $timeout, closure $
 
 }/*}}}*/
 
-function dialogue_topic($topic, closure $closure, $timeout = 180)
+function dialogue_topic($topic, closure $closure)
 {/*{{{*/
     $topics = dialogue_topics();
 
     $topics[] = [
         'topic' => $topic,
         'closure' => $closure,
-        'timeout' => $timeout,
     ];
 
     dialogue_topics($topics);
