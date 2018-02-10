@@ -229,11 +229,11 @@ function dialogue_watch($config_key = 'default', $memory_limit = 1048576)
 
 function dialogue_ask_and_wait($user_id, $ask, $timeout, $config_key = 'default')
 {/*{{{*/
-    _dialogue_operator_waiting_with_user($user_id, $timeout, function () use ($user_id, $ask, $timeout, $config_key) {
+    return _dialogue_operator_waiting_with_user($user_id, $timeout, function () use ($user_id, $ask, $timeout, $config_key) {
 
         dialogue_say($user_id, $ask);
 
-        $message = _dialogue_pull(_dialogue_waiting_user_tube($user_id), $config_key);
+        $message = _dialogue_pull(_dialogue_waiting_user_tube($user_id), $timeout, $config_key);
 
         return $message['content'];
     });
