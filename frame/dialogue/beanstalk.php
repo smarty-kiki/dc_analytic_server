@@ -254,9 +254,9 @@ function dialogue_watch($config_key = 'default', $memory_limit = 1048576)
     }
 }/*}}}*/
 
-function dialogue_ask_and_wait($user_id, $ask, $timeout, $pattern = null, $config_key = 'default')
+function dialogue_ask_and_wait($user_id, $ask, $pattern = null, $timeout = 30, $config_key = 'default')
 {/*{{{*/
-    return _dialogue_operator_waiting_with_user($user_id, $timeout, function () use ($user_id, $ask, $timeout, $pattern, $config_key) {
+    return _dialogue_operator_waiting_with_user($user_id, $timeout, function () use ($user_id, $ask, $pattern, $timeout, $config_key) {
 
         dialogue_say($user_id, $ask);
 
