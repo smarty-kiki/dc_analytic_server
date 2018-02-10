@@ -266,11 +266,14 @@ function dialogue_ask_and_wait($user_id, $ask, $pattern = null, $timeout = 30, $
 
             $content = $message['content'];
 
+            /**kiki*/error_log(print_r($content, true)."\n", 3, '/tmp/error_user.log');
             if (is_null($pattern)) {
                 return $content;
             }
 
+            /**kiki*/error_log(print_r($pattern, true)."\n", 3, '/tmp/error_user.log');
             $matched = _dialogue_content_match($content, $pattern);
+            /**kiki*/error_log(print_r($matched, true)."\n", 3, '/tmp/error_user.log');
 
             if ($matched) {
                 return $matched;
