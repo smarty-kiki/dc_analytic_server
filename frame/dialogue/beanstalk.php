@@ -132,7 +132,7 @@ function _dialogue_content_match($content, $pattern)
     static $match_key = 0;
     static $catch_key = 1;
 
-    $count = preg_match_all($pattern, $content, $matches = []);
+    $count = preg_match_all($pattern, $content, $matches);
 
     if (array_key_exists($match_key, $matches)) {
         if (array_key_exists($catch_key, $matches)) {
@@ -254,7 +254,7 @@ function dialogue_watch($config_key = 'default', $memory_limit = 1048576)
     }
 }/*}}}*/
 
-function dialogue_ask_and_wait($user_id, $ask, $pattern = null, $timeout = 30, $config_key = 'default')
+function dialogue_ask_and_wait($user_id, $ask, $pattern = null, $timeout = 60, $config_key = 'default')
 {/*{{{*/
     return _dialogue_operator_waiting_with_user($user_id, $timeout, function () use ($user_id, $ask, $pattern, $timeout, $config_key) {
 

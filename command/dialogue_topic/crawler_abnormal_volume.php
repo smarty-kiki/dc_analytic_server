@@ -32,7 +32,7 @@ dialogue_topic(['查*的资料', '*是什么币', '介绍一下*'], function ($u
             $res = '超时了';
         }
 
-        dialogue_say($user_id, $res);
+        dialogue_say($user_id, $res[0]);
     }
 
 });
