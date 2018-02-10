@@ -258,22 +258,27 @@ function dialogue_ask_and_wait($user_id, $ask, $pattern = null, $timeout = 60, $
 {/*{{{*/
     return _dialogue_operator_waiting_with_user($user_id, $timeout, function () use ($user_id, $ask, $pattern, $timeout, $config_key) {
 
+        $timeout_time = time() + $timeout;
+
         dialogue_say($user_id, $ask);
 
         for (;;) {
+
+            $timeout = $timeout_time - time();
+
+            if ($timeout <= 0) {
+                return null;
+            }
 
             $message = _dialogue_pull(_dialogue_waiting_user_tube($user_id), $timeout, $config_key);
 
             $content = $message['content'];
 
-            /**kiki*/error_log(print_r($content, true)."\n", 3, '/tmp/error_user.log');
             if (is_null($pattern)) {
                 return $content;
             }
 
-            /**kiki*/error_log(print_r($pattern, true)."\n", 3, '/tmp/error_user.log');
             $matched = _dialogue_content_match($content, $pattern);
-            /**kiki*/error_log(print_r($matched, true)."\n", 3, '/tmp/error_user.log');
 
             if ($matched) {
                 return $matched;
