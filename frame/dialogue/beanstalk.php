@@ -1,6 +1,7 @@
 <?php
 
 define('DIALOGUE_POOL_TUBE', 'dialogue_pool');
+define('DIALOGUE_WAITING_USER_TUBE_PREFIX', 'dialogue_waiting_');
 
 /**
  * delegate
@@ -61,14 +62,18 @@ function dialogue_topic_match($content, $topic)
     return [$matched, $args];
 }/*}}}*/
 
-function _dialogue_waiting_user_tube($user_id)
-{/*{{{*/
-    return 'dialogue_tube_'.$user_id;
-}/*}}}*/
-
 /**
  * dispatch
  */
+function _dialogue_waiting_user_tubes($user_id)
+{/*{{{*/
+    $tubes = cache_keys(DIALOGUE_WAITING_USER_TUBE_PREFIX.$user_id.'_*');
+
+    sort($tubes);
+
+    return $tubes;
+}/*}}}*/
+
 function _dialogue_push($user_id, $content, $delay, $priority, $tube, $config_key)
 {/*{{{*/
     $fp = _beanstalk_connection($config_key);
@@ -92,21 +97,26 @@ function _dialogue_push($user_id, $content, $delay, $priority, $tube, $config_ke
 
 function dialogue_push($user_id, $content, $delay = 0, $priority = 10, $config_key = 'default')
 {/*{{{*/
-    if (cache_get(_dialogue_waiting_user_tube($user_id))) {
-        return dialogue_push_for_exists($user_id, $content, $delay, $priority, $config_key);
-    } else {
-        return dialogue_push_for_new($user_id, $content, $delay, $priority, $config_key);
-    }
+    $tubes = _dialogue_waiting_user_tubes($user_id);
+
+    $tube = reset($tubes);
+
+    $tube = $tube? $tube: DIALOGUE_POOL_TUBE;
+
+    return _dialogue_push($user_id, $content, $delay, $priority, $tube, $config_key);
 }/*}}}*/
 
-function dialogue_push_for_new($user_id, $content, $delay = 0, $priority = 10, $config_key = 'default')
+function dialogue_push_to_other_operator($user_id, $content, $delay = 0, $priority = 10, $config_key = 'default')
 {/*{{{*/
-    return _dialogue_push($user_id, $content, $delay, $priority, DIALOGUE_POOL_TUBE, $config_key);
-}/*}}}*/
+    $tubes = _dialogue_waiting_user_tubes($user_id);
 
-function dialogue_push_for_exists($user_id, $content, $delay = 0, $priority = 10, $config_key = 'default')
-{/*{{{*/
-    return _dialogue_push($user_id, $content, $delay, $priority, _dialogue_waiting_user_tube($user_id), $config_key);
+    $now_tube = _dialogue_waiting_user_tube();
+
+    $now_index = array_search($now_tube, $tubes);
+
+    $tube = array_key_exists($now_index + 1, $tubes)? $tubes[$now_index + 1]: DIALOGUE_POOL_TUBE;
+
+    return _dialogue_push($user_id, $content, $delay, $priority, $tube, $config_key);
 }/*}}}*/
 
 /**
@@ -176,6 +186,21 @@ function _dialogue_operator_talking_with_user($user_id, closure $action)
     return $res;
 }/*}}}*/
 
+function _dialogue_waiting_user_tube($user_id = null)
+{/*{{{*/
+    static $container = null;
+
+    if (! is_null($user_id)) {
+        if ($user_id) {
+            $container = DIALOGUE_WAITING_USER_TUBE_PREFIX.$user_id.'_'.microtime(true);
+        } else {
+            $container = null;
+        }
+    }
+
+    return $container;
+}/*}}}*/
+
 function _dialogue_operator_waiting_with_user($user_id, $timeout, closure $action)
 {/*{{{*/
     $user_tube = _dialogue_waiting_user_tube($user_id);
@@ -186,12 +211,13 @@ function _dialogue_operator_waiting_with_user($user_id, $timeout, closure $actio
 
     try {
 
-        $res = call_user_func($action);
+        $res = call_user_func($action, $user_tube);
 
     } catch (Exception $ex) {
     } finally {
 
         cache_delete($user_tube);
+        _dialogue_waiting_user_tube(false);
 
         return $res;
     }
@@ -258,7 +284,7 @@ function dialogue_ask_and_wait($user_id, $ask, $pattern = null, $timeout = 60, $
 {/*{{{*/
     $timeout_time = time() + $timeout;
 
-    return _dialogue_operator_waiting_with_user($user_id, $timeout, function () use ($timeout_time, $user_id, $ask, $pattern, $config_key) {
+    return _dialogue_operator_waiting_with_user($user_id, $timeout, function ($user_tube) use ($timeout_time, $user_id, $ask, $pattern, $config_key) {
 
         dialogue_say($user_id, $ask);
 
@@ -270,7 +296,7 @@ function dialogue_ask_and_wait($user_id, $ask, $pattern = null, $timeout = 60, $
                 return null;
             }
 
-            $message = _dialogue_pull(_dialogue_waiting_user_tube($user_id), $timeout, $config_key);
+            $message = _dialogue_pull($user_tube, $timeout, $config_key);
 
             $content = $message['content'];
 
