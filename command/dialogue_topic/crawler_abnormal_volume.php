@@ -21,18 +21,30 @@ dialogue_topic(['查*的资料', '*是什么币', '介绍一下*'], function ($u
     $tickers = coinmarketcap_get_tickers();
 
     if (array_key_exists($upper_symbol, $tickers)) {
-
         dialogue_say($user_id, '进这里看 https://www.btc8.io/currency/'.$tickers[$upper_symbol]['name']);
-
     } else {
-
-        $res = dialogue_ask_and_wait($user_id, "额，我还不知道 $symbol 是什么", '/([A-Z]+)/', 30);
-
-        if (is_null($res)) {
-            dialogue_say($user_id, '超时了');
-        } else {
-            dialogue_say($user_id, $res[0]);
-        }
+        dialogue_say($user_id, "额，我还不知道 $symbol 是什么");
     }
+});
+
+dialogue_topic(['测数字'], function ($user_id, $content, $time) {
+
+    $number = dialogue_ask_and_wait($user_id, '发给我一个数字', '/([0-9]+)/', 180);
+
+    dialogue_say($user_id, '我收到了数字'.$number);
+
+});
+
+dialogue_topic(['测字母'], function ($user_id, $content, $time) {
+
+    $number = dialogue_ask_and_wait($user_id, '发给我一个字母', '/([a-z]+)/', 180);
+
+    dialogue_say($user_id, '我收到了数字'.$number);
+
+});
+
+dialogue_topic(['打个岔'], function ($user_id, $content, $time) {
+
+    dialogue_say($user_id, '打个岔');
 
 });
