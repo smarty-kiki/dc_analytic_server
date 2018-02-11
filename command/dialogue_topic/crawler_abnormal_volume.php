@@ -31,16 +31,22 @@ dialogue_topic(['测数字'], function ($user_id, $content, $time) {
 
     $number = dialogue_ask_and_wait($user_id, '发给我一个数字', '/([0-9]+)/', 180);
 
-    dialogue_say($user_id, '我收到了数字'.$number);
-
+    if (is_null($number)) {
+        dialogue_say($user_id, '等数字等到花都谢了');
+    } else {
+        dialogue_say($user_id, '我收到了数字'.reset($number));
+    }
 });
 
 dialogue_topic(['测字母'], function ($user_id, $content, $time) {
 
     $letter = dialogue_ask_and_wait($user_id, '发给我一个字母', '/([a-z]+)/', 180);
 
-    dialogue_say($user_id, '我收到了字母'.$letter);
-
+    if (is_null($letter)) {
+        dialogue_say($user_id, '等字母等到花都谢了');
+    } else {
+        dialogue_say($user_id, '我收到了字母'.reset($letter));
+    }
 });
 
 dialogue_topic(['打个岔'], function ($user_id, $content, $time) {
