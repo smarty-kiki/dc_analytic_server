@@ -37,9 +37,9 @@ dialogue_topic(['测数字'], function ($user_id, $content, $time) {
 
 dialogue_topic(['测字母'], function ($user_id, $content, $time) {
 
-    $number = dialogue_ask_and_wait($user_id, '发给我一个字母', '/([a-z]+)/', 180);
+    $letter = dialogue_ask_and_wait($user_id, '发给我一个字母', '/([a-z]+)/', 180);
 
-    dialogue_say($user_id, '我收到了数字'.$number);
+    dialogue_say($user_id, '我收到了字母'.$letter);
 
 });
 
