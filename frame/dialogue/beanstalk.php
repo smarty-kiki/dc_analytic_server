@@ -309,7 +309,7 @@ function dialogue_ask_and_wait($user_id, $ask, $pattern = null, $timeout = 60, $
             if ($matched) {
                 return $matched;
             } else {
-                /**kiki*/error_log(print_r($content.'未匹配 pattern ', true)."\n", 3, '/tmp/error_user.log');
+                dialogue_push_to_other_operator($message['user_id'], $content, $delay = 0, $priority = 10, $config_key = 'default');
             }
         }
     });
