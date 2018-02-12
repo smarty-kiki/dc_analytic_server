@@ -12,7 +12,7 @@ command('dialogue:operator', '启动接线员', function ()
     });
 
     dialogue_topic_miss(function ($user_id, $message) {
-        business_wechat_send_message($user_id, [],[], "我无法处理 '$message'");
+        dialogue_say($user_id, "不懂 '$message'");
     });
 
     dialogue_watch($config_key, $memory_limit);
