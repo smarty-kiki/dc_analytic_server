@@ -11,7 +11,6 @@ set_exception_handler('http_ex_action');
 register_shutdown_function('http_fatel_err_action');
 
 if_has_exception(function ($ex) {
-    /**kiki*/error_log(print_r($ex, true)."\n", 3, '/tmp/error_user.log');
     return json([
         'succ' => false,
         'msg' => $ex->getMessage(),
