@@ -191,7 +191,7 @@ function business_wechat_prpcrypt_decrypt($encoding_AES_key, $echostr, $corpid)
     return $xml_content;
 }/*}}}*/
 
-function business_wechat_prpcrypt_encrypt($encoding_AES_key, $echostr, $corpid)
+function business_wechat_prpcrypt_encrypt($encoding_AES_key, $text, $corpid)
 {/*{{{*/
     try {
         $key = base64_decode($encoding_AES_key);
