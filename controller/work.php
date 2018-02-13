@@ -12,6 +12,7 @@ if_post('/work/receive', function ()
     list($msg_signature, $timestamp, $nonce) = input_list('msg_signature', 'timestamp', 'nonce');
 
     $message_info = business_wechat_receive_message($msg_signature, $timestamp, $nonce, input_post_raw());
+    /**kiki*/error_log(print_r($message_info, true)."\n", 3, '/tmp/error_user.log');
 
     $type = $message_info['type'];
     $message = $message_info['message'];
