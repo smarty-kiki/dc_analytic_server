@@ -11,12 +11,17 @@ if_post('/work/receive', function ()
 {
     list($msg_signature, $timestamp, $nonce) = input_list('msg_signature', 'timestamp', 'nonce');
 
-    $message_xml = business_wechat_decrypt_message($msg_signature, $timestamp, $nonce, input_post_raw());
+    $message_info = business_wechat_receive_message($msg_signature, $timestamp, $nonce, input_post_raw());
 
-    $message = simplexml_load_string($message_xml);
+    $type = $message_info['type'];
+    $message = $message_info['message'];
 
-    switch ((string) $message->MsgType) {
+    switch ($type) {
     case 'text':
-        dialogue_push((string) $message->FromUserName, (string) $message->Content);
+        $reply_message = dialogue_push($message['user_id'], $message['content'], true);
+
+        $res =  business_wechat_reply_message($reply_message['user_id'], $reply_message['content']);
+        /**kiki*/error_log(print_r($res, true)."\n", 3, '/tmp/error_user.log');
+        return $res;
     }
 });

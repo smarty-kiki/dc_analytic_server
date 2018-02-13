@@ -8,7 +8,7 @@ function _business_wechat_access_token()
 {/*{{{*/
     static $cache_key = 'business_wechat_access_token';
 
-    static $corp_id = BUSINESS_WECHAT_CORPID;
+    static $corpid = BUSINESS_WECHAT_CORPID;
     static $secret = 'z_ol9gewn1L9wVexQACEv64hFhG9LshLf2Uby9wfiDw';
 
     static $access_token = null;
@@ -17,7 +17,7 @@ function _business_wechat_access_token()
         $access_token = cache_get($cache_key);
 
         if (! $access_token) {
-            $info = remote_get_json("https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=$corp_id&corpsecret=$secret", 3, 3);
+            $info = remote_get_json("https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=$corpid&corpsecret=$secret", 3, 3);
 
             if (array_key_exists('access_token', $info)) {
                 $access_token = $info['access_token'];
@@ -31,7 +31,7 @@ function _business_wechat_access_token()
     return $access_token;
 }/*}}}*/
 
-function business_wechat_send_message($user_ids, $party_ids, $tag_ids, $message)
+function business_wechat_send_message($user_ids, $party_ids, $tag_ids, $content)
 {/*{{{*/
     $access_token = _business_wechat_access_token();
 
@@ -42,12 +42,44 @@ function business_wechat_send_message($user_ids, $party_ids, $tag_ids, $message)
         'msgtype' => "text",
         'agentid' => 1000002,
         'text' => [
-            'content' => $message,
+            'content' => $content,
         ],
         'safe' => 0
     ]));
 
     return ! $res['errcode'];
+}/*}}}*/
+
+function business_wechat_reply_message($user_id, $content)
+{/*{{{*/
+    static $corpid = BUSINESS_WECHAT_CORPID;
+
+    $timestamp = time();
+
+    $xml = "<xml>
+        <ToUserName><![CDATA[".$user_id."]]></ToUserName>
+        <FromUserName><![CDATA[".$corpid."]]></FromUserName>
+        <CreateTime>".$timestamp."</CreateTime>
+        <MsgType><![CDATA[text]]></MsgType>
+        <Content><![CDATA[".$content."]]></Content>
+        </xml>";
+
+    return business_wechat_encrypt_message($xml, $timestamp, $timestamp);
+}/*}}}*/
+
+function business_wechat_receive_message($msg_signature, $timestamp, $nonce, $post_raw)
+{/*{{{*/
+    $message_xml = business_wechat_decrypt_message($msg_signature, $timestamp, $nonce, $post_raw);
+
+    $message = simplexml_load_string($message_xml);
+
+    return [
+        'type' => (string) $message->MsgType,
+        'message' => [
+            'user_id' => (string) $message->FromUserName,
+            'content' => (string) $message->Content,
+        ],
+    ];
 }/*}}}*/
 
 function business_wechat_get_department()
@@ -107,6 +139,25 @@ function business_wechat_decrypt_message($msg_signature, $timestamp, $nonce, $po
     return business_wechat_prpcrypt_decrypt($encoding_AES_key, $encrypt_msg, $corpid);
 }/*}}}*/
 
+function business_wechat_encrypt_message($xml, $timestamp, $nonce)
+{/*{{{*/
+    static $corpid = BUSINESS_WECHAT_CORPID;
+    static $token = BUSINESS_WECHAT_CHAT_API_TOKEN;
+    static $encoding_AES_key = BUSINESS_WECHAT_CHAT_API_ENCODING_ASE_KEY;
+
+    $encrypt = business_wechat_prpcrypt_encrypt($encoding_AES_key, $xml, $nonce);
+
+    $signature = business_wechat_sha1($token, $timestamp, $nonce, $encrypt);
+
+    $format = "<xml>
+        <Encrypt><![CDATA[%s]]></Encrypt>
+        <MsgSignature><![CDATA[%s]]></MsgSignature>
+        <TimeStamp>%s</TimeStamp>
+        <Nonce><![CDATA[%s]]></Nonce>
+        </xml>";
+    return sprintf($format, $encrypt, $signature, $timestamp, $nonce);
+}/*}}}*/
+
 function business_wechat_prpcrypt_decrypt($encoding_AES_key, $echostr, $corpid)
 {/*{{{*/
     try {
@@ -140,13 +191,60 @@ function business_wechat_prpcrypt_decrypt($encoding_AES_key, $echostr, $corpid)
     return $xml_content;
 }/*}}}*/
 
+function business_wechat_prpcrypt_encrypt($encoding_AES_key, $echostr, $corpid)
+{/*{{{*/
+    try {
+        $key = base64_decode($encoding_AES_key);
+
+        $random = business_wechat_prpcrypt_random_string();
+        $text = $random.pack('N', strlen($text)).$text.$corpid;
+        $iv = substr($key, 0, 16);
+        $text = business_wechat_pkcs7_encode($text);
+        $encrypted = openssl_encrypt($text, 'aes-256-cbc', $key, $options= 1 | OPENSSL_NO_PADDING, $iv);
+
+        return base64_encode($encrypted);
+    } catch (Exception $e) {
+        throw new Exception('EncryptAESError');
+    }
+}/*}}}*/
+
+function business_wechat_prpcrypt_random_string()
+{/*{{{*/
+    $str = "";
+    $str_pol = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz";
+    $max = strlen($str_pol) - 1;
+    for ($i = 0; $i < 16; $i++) {
+        $str .= $str_pol[mt_rand(0, $max)];
+    }
+    return $str;
+}/*}}}*/
+
 function business_wechat_pkcs7_decode($text)
 {/*{{{*/
+    static $block_size = 32;
+
     $pad = ord(substr($text, -1));
-    if ($pad < 1 || $pad > 32) {
+    if ($pad < 1 || $pad > $block_size) {
         $pad = 0;
     }
     return substr($text, 0, (strlen($text) - $pad));
+}/*}}}*/
+
+function business_wechat_pkcs7_encode($text)
+{/*{{{*/
+    static $block_size = 32;
+
+    $amount_to_pad = $block_size - (strlen($text) % $block_size);
+    if ($amount_to_pad == 0) {
+        $amount_to_pad = $block_size;
+    }
+
+    $pad_chr = chr($amount_to_pad);
+    $tmp = "";
+    for ($index = 0; $index < $amount_to_pad; $index++) {
+        $tmp .= $pad_chr;
+    }
+    return $text.$tmp;
 }/*}}}*/
 
 function business_wechat_sha1($token, $timestamp, $nonce, $encrypt_msg)

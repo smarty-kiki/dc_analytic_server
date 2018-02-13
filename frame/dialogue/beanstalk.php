@@ -134,7 +134,7 @@ function _dialogue_push($user_id, $content, $tube, $is_sync = false, $delay = 0,
 
         $recvd_message = _dialogue_pull_message($sync_user_tube, 10, $config_key);
 
-        return $recvd_message['content'];
+        return $recvd_message;
     } else {
         return _dialogue_push_message($message, $tube, $delay, $priority, $config_key);
     }

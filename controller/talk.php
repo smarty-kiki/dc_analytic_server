@@ -2,5 +2,7 @@
 
 if_get('/talk', function ()
 {
-    return dialogue_push((string) input('user'), (string) input('msg'), true);
+    $message =  dialogue_push((string) input('user'), (string) input('msg'), true);
+
+    return $message['content'];
 });
