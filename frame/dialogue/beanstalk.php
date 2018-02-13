@@ -402,6 +402,10 @@ function dialogue_say($user_id, $content)
     if (_dialogue_force_say_sync()) {
 
         _dialogue_push($user_id, $content, _dialogue_push_sync_user_tube());
+
+        _dialogue_force_say_sync(false);
+
+        _dialogue_push_sync_user_tube(false);
     } else {
 
         $action = dialogue_send_action();
