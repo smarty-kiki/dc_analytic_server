@@ -26,31 +26,3 @@ dialogue_topic(['查*的资料', '*是什么币', '介绍一下*'], function ($u
         dialogue_say($user_id, "额，我还不知道 $symbol 是什么");
     }
 });/*}}}*/
-
-dialogue_topic(['测数字'], function ($user_id, $content, $time) {/*{{{*/
-
-    $number = dialogue_ask_and_wait($user_id, '发给我一个数字', '/([0-9]+)/', 180);
-
-    if (is_null($number)) {
-        dialogue_say($user_id, '等数字等到花都谢了');
-    } else {
-        dialogue_say($user_id, '我收到了数字'.reset($number));
-    }
-});/*}}}*/
-
-dialogue_topic(['测字母'], function ($user_id, $content, $time) {/*{{{*/
-
-    $letter = dialogue_ask_and_wait($user_id, '发给我一个字母', '/([a-z]+)/', 180);
-
-    if (is_null($letter)) {
-        dialogue_say($user_id, '等字母等到花都谢了');
-    } else {
-        dialogue_say($user_id, '我收到了字母'.reset($letter));
-    }
-});/*}}}*/
-
-dialogue_topic(['打个岔'], function ($user_id, $content, $time) {/*{{{*/
-
-    dialogue_say($user_id, '打个岔');
-
-});/*}}}*/
