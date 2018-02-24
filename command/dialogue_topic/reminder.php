@@ -40,7 +40,7 @@ dialogue_topic(['取消*的提醒'], function ($user_id, $content, $time, $descr
                 dialogue_say($user_id, '取消了');
             }
         } else {
-            $content = '有多个含有 "'.$description.'" 的提醒，回复我要删除的序号:';
+            $content = '有多个相关的提醒，回复我要取消的序号:';
 
             foreach ($reminders as $index => $reminder) {
                 $content .= "\n$index. ".$reminder['description'].' '.$reminder['at'];
