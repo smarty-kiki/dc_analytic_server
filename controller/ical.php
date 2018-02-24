@@ -11,7 +11,7 @@ if_get('/ical/reminder/*', function ($user_id)
             $ical->new_event();
             $ical->set_title($reminder['description']);
             $ical->set_description($reminder['description']);
-            $ical->set_dates(now($reminder['at']), now($reminder['at'] + 3600));
+            $ical->set_dates(now($reminder['at']), now($reminder['at'].' + 3600 sec'));
             $ical->set_status("confirmed");
             $ical->set_alarm();
             $ical->set_alarm_text("");
