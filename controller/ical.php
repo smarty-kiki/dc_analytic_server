@@ -1,17 +1,17 @@
 <?php
 
-if_get('/ical/ico', function ()
+if_get('/ical/reminder/*', function ($user_id)
 {/*{{{*/
-    $icos = db_simple_query(crawl_ico_table(), ['from >=' => strtotime('-2 days')], 'order by at limit 100');
+    $reminders = db_simple_query('reminder', ['user_id' => $user_id], 'order by at');
 
-    if ($icos) {
+    if ($reminders) {
         $ical = new iCal();
 
-        foreach ($icos as $ico) {
+        foreach ($reminders as $reminder) {
             $ical->new_event();
-            $ical->set_title($ico['web'].': '.$ico['title']);
-            $ical->set_description($ico['url']);
-            $ical->set_dates(now($ico['from']), now($ico['from'] + 3600));
+            $ical->set_title($reminder['description']);
+            $ical->set_description($reminder['description']);
+            $ical->set_dates(now($reminder['at']), now($reminder['at'] + 3600));
             $ical->set_status("confirmed");
             $ical->set_alarm();
             $ical->set_alarm_text("");
