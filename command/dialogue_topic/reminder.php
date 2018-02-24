@@ -14,7 +14,7 @@ dialogue_topic(['提醒我*'], function ($user_id, $content, $time, $description
         'at' => $time,
     ]);
 
-    dialogue_say($user_id, '好的，我将在 '.$time.' 提醒你 '.$description);
+    dialogue_say($user_id, '好的，我将在 '.$time.' 提醒你');
 
 });/*}}}*/
 
@@ -43,7 +43,7 @@ dialogue_topic(['取消*的提醒'], function ($user_id, $content, $time, $descr
             $content = '有多个含有 "'.$description.'" 的提醒，回复我要删除的序号:';
 
             foreach ($reminders as $index => $reminder) {
-                $content .= $index.'. '.$reminder['description'].' '.$reminder['at'];
+                $content .= "\n$index. ".$reminder['description'].' '.$reminder['at'];
             }
 
             do {
@@ -55,6 +55,6 @@ dialogue_topic(['取消*的提醒'], function ($user_id, $content, $time, $descr
             dialogue_say($user_id, '取消了');
         }
     } else {
-        dialogue_say($user_id, '没有找到与 "'.$description.'" 相关的提醒');
+        dialogue_say($user_id, '没有找到将来与 "'.$description.'" 相关的提醒');
     }
 });/*}}}*/
