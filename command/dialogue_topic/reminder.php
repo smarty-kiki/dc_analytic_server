@@ -48,7 +48,7 @@ dialogue_topic(['取消*的提醒'], function ($user_id, $content, $time, $descr
 
             do {
                 $index = dialogue_ask_and_wait($user_id, $content);
-            } while (isset($reminders[$index]));
+            } while (! isset($reminders[$index]));
 
             db_simple_delete('reminder', ['id' => $reminders[$index]['id']]);
 
