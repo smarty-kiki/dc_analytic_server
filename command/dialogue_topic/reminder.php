@@ -22,7 +22,7 @@ dialogue_topic(['取消*的提醒'], function ($user_id, $content, $time, $descr
 
     $description = strtoupper(trim($description));
 
-    $reminders = db_simple_query('reminder', ['description like' => "%$description&", 'at >' => now()]);
+    $reminders = db_simple_query('reminder', ['description like' => "%$description%", 'at >' => now()]);
 
     if ($reminders) {
 
