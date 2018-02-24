@@ -22,7 +22,7 @@ dialogue_topic(['取消*的提醒'], function ($user_id, $content, $time, $descr
 
     $description = strtoupper(trim($description));
 
-    $reminders = db_simple_query('reminder', ['description like' => "%$description%", 'at >' => now()]);
+    $reminders = db_simple_query('reminder', ['user_id' => $user_id, 'description like' => "%$description%", 'at >' => now()]);
 
     if ($reminders) {
 
@@ -56,21 +56,5 @@ dialogue_topic(['取消*的提醒'], function ($user_id, $content, $time, $descr
         }
     } else {
         dialogue_say($user_id, '没有找到将来与 "'.$description.'" 相关的提醒');
-    }
-});/*}}}*/
-
-dialogue_topic(['*今天*提醒*'], function ($user_id, $content, $time) {/*{{{*/
-
-    $reminders = db_simple_query('reminder', ['at >' => now(), 'at <' => now('+ 1 days')]);
-
-    if ($reminders) {
-
-        $reminder_contents = array_map(function ($reminder) {
-            return $reminder['description'].' '.$reminder['at'];
-        }, $reminders);
-
-        dialogue_say($user_id, implode("\n", $reminder_contents));
-    } else {
-        dialogue_say($user_id, '今天没有提醒事项');
     }
 });/*}}}*/
