@@ -57,16 +57,4 @@ dialogue_topic(['取消*的提醒'], function ($user_id, $content, $time, $descr
     } else {
         dialogue_say($user_id, '没有找到与 "'.$description.'" 相关的提醒');
     }
-
-
-    $time = now($time);
-
-    db_simple_insert('reminder', [
-        'user_id' => $user_id,
-        'description' => $description,
-        'at' => $time,
-    ]);
-
-    dialogue_say($user_id, '好的，我将在 '.$time.' 提醒你 '.$description);
-
 });/*}}}*/
