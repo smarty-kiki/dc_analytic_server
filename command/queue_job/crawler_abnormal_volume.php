@@ -41,22 +41,22 @@ queue_job('crawler_bittrex_abnormal_volume', function ()
         }
 
         foreach ($market_infos_indexed_by_symbol as $symbol => $info) {
-            queue_push('crawler_bittrex_abnormal_volume_single', [
-                'symbol' => $symbol,
-                'rank' => $ranks[$symbol],
-            ]);
+//            queue_push('crawler_bittrex_abnormal_volume_single', [
+//                'symbol' => $symbol,
+//                'rank' => $ranks[$symbol],
+//            ]);
             queue_push('crawler_binance_abnormal_volume_single', [
                 'symbol' => $symbol,
                 'rank' => $ranks[$symbol],
             ]);
-            queue_push('crawler_okex_abnormal_volume_single', [
-                'symbol' => $symbol,
-                'rank' => $ranks[$symbol],
-            ]);
-            queue_push('crawler_bitfinex_abnormal_volume_single', [
-                'symbol' => $symbol,
-                'rank' => $ranks[$symbol],
-            ]);
+//            queue_push('crawler_okex_abnormal_volume_single', [
+//                'symbol' => $symbol,
+//                'rank' => $ranks[$symbol],
+//            ]);
+//            queue_push('crawler_bitfinex_abnormal_volume_single', [
+//                'symbol' => $symbol,
+//                'rank' => $ranks[$symbol],
+//            ]);
         }
     } catch (Exception $ex) {
         if ($ex instanceof PDOException) {
