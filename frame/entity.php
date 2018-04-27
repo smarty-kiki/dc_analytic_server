@@ -1,738 +1,222 @@
 <?php
 
-abstract class entity implements JsonSerializable, Serializable
+define('DAO_DIR', DOMAIN_DIR.'/dao');
+define('ENTITY_DIR', DOMAIN_DIR.'/entity');
+
+function _generate_entity_file($entity_name, $entity_structs, $entity_relationships)
+{/*{{{*/
+    $content = '<?php
+
+class %s extends entity
 {
-    /*{{{*/
-    const INIT_VERSION = 0;
-
-    public $id;
-    public $version;
-    public $create_time;
-    public $update_time;
-    public $delete_time;
-
-    private $is_force_deleted;
-
-    public $structs = [];
-    public $attributes = [];
-    protected $json_attributes = [];
-
-    public static $null_entity_mock_attributes = [];
-
-    private $relationships = [];
-    private $relationship_refs = [];
-
-    public static function get_system_code()
-    {
-        return null;
-    }
-
-    abstract public static function create();
-
-    protected static function init()
-    {
-        $static = new static();
-        $static->attributes = $static->structs;
-        $static->id = self::generate_id();
-        $static->version = self::INIT_VERSION;
-        $static->is_force_deleted = false;
-        $static->create_time = $static->update_time = now();
-        $static->delete_time = null;
-
-        local_cache_set($static);
-
-        return $static;
-    }
-
-    final public static function generate_id()
-    {
-        return generate_id();
-    }
-
-    final public function is_new()
-    {
-        return self::INIT_VERSION === $this->version;
-    }
-
-    final public function is_updated()
-    {
-        return $this->attributes != $this->structs;
-    }
-
-    final public function is_deleted()
-    {
-        return ! is_null($this->delete_time);
-    }
-
-    final public function delete()
-    {
-        $this->delete_time = now();
-    }
-
-    final public function restore()
-    {
-        $this->delete_time = null;
-    }
-
-    final public function is_force_deleted()
-    {
-        return $this->is_force_deleted;
-    }
-
-    final public function force_delete()
-    {
-        $this->is_force_deleted = true;
-    }
-
-    public function is_null()
-    {
-        return false;
-    }
-
-    public function is_not_null()
-    {
-        return ! $this->is_null();
-    }
-
-    final public function get_dao()
-    {
-        return dao(get_class($this));
-    }
-
-    public function jsonSerialize()
-    {
-        foreach ($this->json_attributes as $key => $attribute) {
-            if (empty($attribute)) {
-                $method = "get_$key";
-
-                if (method_exists($this, $method)) {
-                    $this->json_attributes[$key] = $this->$method();
-                }
-            }
-        }
-
-        return array_merge($this->attributes, $this->json_attributes);
-    }
-
-    public function serialize()
-    {
-        $serializable = get_object_vars($this);
-
-        unset($serializable['relationships']);
-
-        return serialize($serializable);
-    }
-
-    public function unserialize($serialized)
-    {
-        $unserialized = unserialize($serialized);
-
-        foreach($unserialized as $property => $value) {
-
-            $this->{$property} = $value;
-
-        }
-    }
-
-    public function __get($property)
-    {
-        $method = "get_$property";
-
-        if (method_exists($this, $method)) {
-            return $this->$method();
-        }
-
-        if (array_key_exists($property, $this->relationships)) {
-            return $this->relationships[$property];
-        }
-
-        if (array_key_exists($property, $this->relationship_refs)) {
-            return $this->load_relationship_from_ref($property);
-        }
-
-        return $this->attributes[$property];
-    }
-
-    final public function __set($property, $value)
-    {
-        $method = "prepare_set_$property";
-
-        if (method_exists($this, $method)) {
-            $value = $this->$method($value);
-        }
-
-        if (array_key_exists($property, $this->relationship_refs)) {
-
-            $this->relationship_refs[$property]->update($value, $this);
-
-            return $this->relationships[$property] = $value;
-        }
-
-        if (array_key_exists($property, $this->attributes)) {
-            return $this->attributes[$property] = $value;
-        }
-    }
-
-    private function load_relationship_from_ref($relationship_name)
-    {
-        $relationship_ref = $this->relationship_refs[$relationship_name];
-
-        return $this->relationships[$relationship_name] = $relationship_ref->load($this);
-    }
-
-    protected function has_one($relationship_name, $entity_name = null, $foreign_key = null)
-    {
-        $self_entity_name = get_class($this);
-
-        if (is_null($entity_name)) {
-            $entity_name = $relationship_name;
-        }
-
-        if (is_null($foreign_key)) {
-            $foreign_key = $self_entity_name.'_id';
-        }
-
-        return $this->relationship_refs[$relationship_name] = new has_one($entity_name, $self_entity_name, $foreign_key);
-    }
-
-    protected function belongs_to($relationship_name, $entity_name = null, $foreign_key = null)
-    {
-        if (is_null($entity_name)) {
-            $entity_name = $relationship_name;
-        }
-
-        if (is_null($foreign_key)) {
-            $foreign_key = $entity_name.'_id';
-        }
-
-        return $this->relationship_refs[$relationship_name] = new belongs_to($entity_name, $foreign_key);
-    }
-
-    protected function has_many($relationship_name, $entity_name = null, $foreign_key = null)
-    {
-        $self_entity_name = get_class($this);
-
-        if (is_null($entity_name)) {
-            $entity_name = $relationship_name;
-        }
-
-        if (is_null($foreign_key)) {
-            $foreign_key = $self_entity_name.'_id';
-        }
-
-        return $this->relationship_refs[$relationship_name] = new has_many($entity_name, $self_entity_name, $foreign_key);
-    }
-}/*}}}*/
-
-class null_entity extends entity
-{
-    /*{{{*/
-    private $mock_entity_name = null;
-
-    public static function create($mock_entity_name = null)
-    {
-        $null_entity = new static;
-        $null_entity->mock_entity_name = $mock_entity_name;
-
-        return $null_entity;
-    }
-
-    public static function get_system_code()
-    {
-        return null;
-    }
-
-    public function is_null()
-    {
-        return true;
-    }
-
-    public function __call($method, $args)
-    {
-        return;
-    }
-
-    public function __get($property)
-    {
-        if ($property === 'id') {
-            return 0;
-        }
-
-        $mock_entity_name = $this->mock_entity_name;
-        if (! is_null($mock_entity_name)) {
-
-            $null_entity_mock_attribute_list = $mock_entity_name::$null_entity_mock_attributes;
-            if (array_key_exists($property, $null_entity_mock_attribute_list)) {
-
-                return $null_entity_mock_attribute_list[$property];
-            }
-        }
-
-        return self::create($property);
-    }
-}/*}}}*/
-
-interface relationship_ref
-{
-    /*{{{*/
-    public function load(entity $from_entity);
-    public function update($values, entity $from_entity);
-}/*}}}*/
-
-class has_one implements relationship_ref
-{
-    /*{{{*/
-    private $entity_name;
-    private $foreign_key;
-
-    public function __construct($entity_name, $from_entity_name, $foreign_key)
-    {
-        $this->entity_name = $entity_name;
-        $this->foreign_key = $foreign_key;
-    }
-
-    public function load(entity $from_entity)
-    {
-        return dao($this->entity_name)->find_by_foreign_key($this->foreign_key, $from_entity->id);
-    }
-
-    public function update($entity, entity $from_entity)
-    {
-        $entity->{$this->foreign_key} = $from_entity->id;
-    }
-}/*}}}*/
-
-class belongs_to implements relationship_ref
-{
-    /*{{{*/
-    private $entity_name;
-    private $foreign_key;
-
-    public function __construct($entity_name, $foreign_key)
-    {
-        $this->entity_name = $entity_name;
-        $this->foreign_key = $foreign_key;
-    }
-
-    public function load(entity $from_entity)
-    {
-        return dao($this->entity_name)->find($from_entity->{$this->foreign_key});
-    }
-
-    public function update($entity, entity $from_entity)
-    {
-        $from_entity->{$this->foreign_key} = $entity->id;
-    }
-}/*}}}*/
-
-class has_many implements relationship_ref
-{
-    /*{{{*/
-    private $entity_name;
-    private $foreign_key;
-
-    public function __construct($entity_name, $from_entity_name, $foreign_key)
-    {
-        $this->entity_name = $entity_name;
-        $this->foreign_key = $foreign_key;
-    }
-
-    public function load(entity $from_entity)
-    {
-        return dao($this->entity_name)->find_all_by_foreign_key($this->foreign_key, $from_entity->id);
-    }
-
-    public function update($entities, entity $from_entity)
-    {
-        foreach ($entities as $entity) {
-            $entity->{$this->foreign_key} = $from_entity->id;
-        }
-    }
-}/*}}}*/
-
-class dao
-{
-    /*{{{*/
-    protected $class_name;
-    protected $table_name;
+    public $structs = [
+        %s
+    ];
 
     public function __construct()
     {/*{{{*/
-        $this->class_name = substr(get_class($this), 0, -4);
+        %s
     }/*}}}*/
 
-    public function find($id_or_ids)
+    public static function create()
     {/*{{{*/
-        if (is_array($ids = $id_or_ids)) {
-            return $this->find_all_by_ids($ids);
+        return parent::init();
+    }/*}}}*/
+}';
+
+    $structs_str = [];
+    foreach ($entity_structs as $struct) {
+        $structs_str[] = "'".$struct['name']."' => '',";
+    }
+
+    $relationship_str = [];
+    foreach ($entity_relationships as $relationship) {
+        if ($relationship['relation_name'] === $relationship['relate_to']) {
+            $relationship_str[] = "\$this->{$relationship['type']}('{$relationship['relate_to']}');";
         } else {
-            return $this->find_by_id($id = $id_or_ids);
+            $relationship_str[] = "\$this->{$relationship['type']}('{$relationship['relation_name']}', '{$relationship['relate_to']}', '{$relationship['relation_name']}_id');";
         }
-    }/*}}}*/
+    }
 
-    private function find_by_id($id)
-    {/*{{{*/
-        if (empty($id)) {
-            return null_entity::create($this->class_name);
-        }
-
-        $entity = local_cache_get($this->class_name, $id);
-
-        if (is_null($entity)) {
-            $row = db_query_first('select * from `'.$this->table_name.'` where id = ?', [$id]);
-            if ($row) {
-                $entity = $this->row_to_entity($row);
-                local_cache_set($entity);
-            } else {
-                $entity = null_entity::create($this->class_name);
-            }
-        }
-
-        return $entity;
-    }/*}}}*/
-
-    public function find_by_foreign_key(string $foreign_key, $value)
-    {/*{{{*/
-        $sql_template = "select * from `$this->table_name` where $foreign_key = :foreign_key";
-
-        return $this->find_by_sql($sql_template, [
-            ':foreign_key' => $value,
-        ]);
-    }/*}}}*/
-
-    protected function find_by_condition($condition, array $binds = [])
-    {/*{{{*/
-        return $this->find_by_sql('select * from `'.$this->table_name.'` where '.$condition, $binds);
-    }/*}}}*/
-
-    protected function find_by_sql($sql_template, array $binds = [])
-    {/*{{{*/
-        $row = db_query_first($sql_template, $binds);
-
-        if (empty($row)) {
-            return null_entity::create($this->class_name);
-        }
-
-        $entity = local_cache_get($this->class_name, $row['id']);
-        if (!is_null($entity)) {
-            return $entity;
-        }
-
-        $entity = $this->row_to_entity($row);
-        local_cache_set($entity);
-
-        return $entity;
-    }/*}}}*/
-
-    private function find_all_by_ids(array $ids)
-    {/*{{{*/
-        if (empty($ids)) {
-            return [];
-        }
-
-        $sql = [
-            'sql_template' => 'select * from `'.$this->table_name.'` where id in :ids order by find_in_set(id, :set)',
-            'binds' => [
-                ':ids' => $ids,
-                ':set' => implode(',', $ids),
-            ],
-        ];
-
-        $rows = db_query($sql['sql_template'], $sql['binds']);
-
-        $entities = [];
-
-        foreach ($rows as $row) {
-            $entity = local_cache_get($this->class_name, $row['id']);
-            if (is_null($entity)) {
-                $entity = $this->row_to_entity($row);
-                local_cache_set($entity);
-            }
-            $entities[$entity->id] = $entity;
-        }
-
-        return $entities;
-    }/*}}}*/
-
-    public function find_all()
-    {/*{{{*/
-        return $this->find_all_by_sql('select * from `'.$this->table_name.'` order by id', []);
-    }/*}}}*/
-
-    public function find_all_by_column(array $columns = [])
-    {/*{{{*/
-        if ($columns) {
-
-            list($where, $binds) = db_simple_where_sql($columns);
-
-            return $this->find_all_by_sql('select * from `'.$this->table_name."` where $where order by id", $binds);
-        } else {
-            return $this->find_all();
-        }
-    }/*}}}*/
-
-    public function find_all_by_foreign_key(string $foreign_key, $value)
-    {/*{{{*/
-        $sql_template = "select * from `$this->table_name` where $foreign_key = :foreign_key";
-
-        return $this->find_all_by_sql($sql_template, [
-            ':foreign_key' => $value,
-        ]);
-    }/*}}}*/
-
-    protected function find_all_by_condition($condition, array $binds = [])
-    {/*{{{*/
-        return $this->find_all_by_sql('select * from `'.$this->table_name.'` where '.$condition, $binds);
-    }/*}}}*/
-
-    protected function find_all_by_sql($sql_template, array $binds = [])
-    {/*{{{*/
-        $entities = [];
-
-        $rows = db_query($sql_template, $binds);
-
-        foreach ($rows as $row) {
-            $entity = local_cache_get($this->class_name, $row['id']);
-            if (is_null($entity)) {
-                $entity = $this->row_to_entity($row);
-                local_cache_set($entity);
-            }
-            $entities[$entity->id] = $entity;
-        }
-
-        return $entities;
-    }/*}}}*/
-
-    public function find_all_paginated_by_current_page_and_condition($current_page, $page_size, $condition, array $binds = [])
-    {/*{{{*/
-        $res = [
-            'list' => [],
-            'pagination' => [
-                'page_size' => $page_size,
-                'current_page' => $current_page,
-                'count' => 0,
-                'pages' => 0,
-            ],
-        ];
-
-        $count = $this->count_by_condition($condition, $binds);
-        if (! $count) {
-            return $res;
-        } else {
-            $res['pagination']['count'] = $count;
-            $res['pagination']['pages'] = ceil($count / $page_size);
-        }
-
-        $offset = $page_size * ($current_page - 1);
-
-        $res['list'] = $this->find_all_by_condition($condition." limit $offset, $page_size", $binds);
-
-        return $res;
-    }/*}}}*/
-
-    public function count()
-    {/*{{{*/
-        $sql = 'select count(*) as count from '.$this->table_name;
-
-        return db_query_value('count', $sql);
-    }/*}}}*/
-
-    protected function count_by_condition($condition, array $binds = [])
-    {/*{{{*/
-        $sql = 'select count(*) as count from '.$this->table_name.' where '.$condition;
-
-        return db_query_value('count', $sql, $binds);
-    }/*}}}*/
-
-    final private function get_dirty($entity)
-    {/*{{{*/
-        $rows = [];
-
-        foreach ($entity->attributes as $column => $value) {
-            if ($entity->structs[$column] !== $value) {
-                $rows[$column] = $value;
-            }
-        }
-
-        $rows['version'] = $entity->version + 1;
-        $rows['update_time'] = now();
-        $rows['delete_time'] = $entity->delete_time;
-
-        return $rows;
-    }/*}}}*/
-
-    final private function row_to_entity($rows)
-    {/*{{{*/
-        $entity = new $this->class_name();
-
-        $entity->id = $rows['id'];
-        $entity->version = $rows['version'];
-        $entity->attributes = $entity->structs = $rows;
-
-        return $entity;
-    }/*}}}*/
-
-    final public function dump_insert_sql($entity)
-    {/*{{{*/
-        $columns = $values = $binds = [];
-
-        $insert = $entity->attributes + [
-            'id' => $entity->id,
-            'version' => $entity->version + 1,
-            'create_time' => $entity->create_time,
-            'update_time' => $entity->update_time,
-        ];
-
-        foreach ($insert as $column => $value) {
-            $columns[] = $column;
-            $values[] = ":$column";
-            $binds[":$column"] = $value;
-        }
-
-        return [
-            'sql_template' => 'insert into `'.$this->table_name.'` (`'.implode('`, `', $columns).'`) values ('.implode(', ', $values).')',
-            'binds' => $binds,
-        ];
-    }/*}}}*/
-
-    final public function dump_update_sql($entity)
-    {/*{{{*/
-        $binds = $update = [];
-
-        $binds[':id'] = $entity->id;
-        $binds[':old_version'] = $entity->version;
-
-        foreach ($this->get_dirty($entity) as $column => $value) {
-            $update[] = "$column = :$column";
-            $binds[":$column"] = $value;
-        }
-
-        return [
-            'sql_template' => 'update `'.$this->table_name.'` set '.implode(', ', $update).' where id = :id and version = :old_version',
-            'binds' => $binds,
-        ];
-    }/*}}}*/
-
-    final public function dump_delete_sql($entity)
-    {/*{{{*/
-        return [
-            'sql_template' => 'delete from `'.$this->table_name.'` where id = :id',
-            'binds' => [
-                ':id' => $entity->id,
-            ],
-        ];
-    }/*}}}*/
+    return sprintf($content, $entity_name, implode("\n        ", $structs_str), implode("\n        ", $relationship_str));
 }/*}}}*/
 
-function dao($class_name)
-{
-    return instance($class_name.'_dao');
-}
+function _generate_dao_file($entity_name, $entity_structs, $entity_relationships)
+{/*{{{*/
+    return "<?php
 
-function _local_cache_key($entity_type, $id)
+class {$entity_name}_dao extends dao
 {
-    return $entity_type.'_'.$id;
-}
+    protected \$table_name = '{$entity_name}';
+    protected \$db_config_key = '".unit_of_work_db_config_key()."';
+}";
+}/*}}}*/
 
-function _local_cache($cached = null)
-{
-    static $container = [];
+function _generate_migration_file($entity_name, $entity_structs, $entity_relationships)
+{/*{{{*/
+    $content = "# up
+        CREATE TABLE `%s` (
+            `id` bigint(20) NOT NULL,
+            `version` int(11) NOT NULL,
+            `create_time` datetime DEFAULT NULL,
+            `update_time` datetime DEFAULT NULL,
+            `delete_time` datetime DEFAULT NULL,
+            %s
+            PRIMARY KEY (`id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-    if (is_null($cached)) {
-        return $container;
+    # down
+    drop table `%s`;";
+
+    $columns = [];
+
+    foreach ($entity_structs as $struct) {
+        $column = sprintf('`%s` %s', $struct['name'], $struct['datatype']);
+        if (! $struct['allow_null']) {
+            $column .= ' NOT NULL';
+        }
+        if ($default = $struct['default']) {
+            if (is_string($default)) {
+                $column .= " DEFAULT '$default'";
+            } else {
+                $column .= " DEFAULT $default";
+            }
+        } else {
+            $column .= ' DEFAULT NULL';
+        }
+
+        $columns[] = $column.',';
     }
 
-    return $container = $cached;
-}
-
-function local_cache_get($entity_type, $id)
-{
-    $cached = _local_cache();
-
-    $key = _local_cache_key($entity_type, $id);
-
-    if (isset($cached[$key])) {
-        return $cached[$key];
+    $indexs = [];
+    foreach ($entity_relationships as $relationship) {
+        if ($relationship['type'] === 'belongs_to') {
+            $columns[] = "`{$relationship['relate_to']}_id` bigint(20) NOT NULL,";
+            $indexs[] = "KEY `fk_{$entity_name}_{$relationship['relate_to']}_idx` (`{$relationship['relation_name']}_id`),";
+        }
     }
 
-    return;
-}
+    return sprintf($content, $entity_name, implode("\n    ", array_merge($columns, $indexs)), $entity_name);
+}/*}}}*/
 
-function local_cache_has($entity_type, $id)
-{
-    $cached = _local_cache();
+command('entity:make', '初始化 entity、dao、migration', function ()
+{/*{{{*/
+    $entity_name = command_paramater('entity_name');
 
-    $key = _local_cache_key($entity_type, $id);
+    $entity_structs = [];
 
-    return isset($cached[$key]);
-}
+    $s = 0;
 
-function local_cache_get_all()
-{
-    return _local_cache();
-}
+    while (command_read_bool('Add struct')) {
 
-function local_cache_set(entity $entity)
-{
-    $cached = _local_cache();
+        $s += 1;
 
-    $key = _local_cache_key(get_class($entity), $entity->id);
+        $entity_structs[] = [
+            'name' => command_read("#$s Column Name:"),
+            'datatype' => command_read("#$s Data type:", 0, ['varchar(45)', 'int(11)', 'datetime', 'date', 'time', 'bigint(20)']),
+            'allow_null' => command_read_bool("#$s Allow Null"),
+            'default' => command_read("#$s Default:", null),
+        ];
 
-    $cached[$key] = $entity;
-
-    _local_cache($cached);
-}
-
-function local_cache_delete($entity_type, $id)
-{
-    $cached = _local_cache();
-
-    $key = _local_cache_key($entity_type, $id);
-
-    unset($cached[$key]);
-
-    _local_cache($cached);
-}
-
-function local_cache_delete_all()
-{
-    _local_cache([]);
-}
-
-function local_cache_flush_all()
-{
-    $cached = _local_cache();
-
-    local_cache_delete_all();
-
-    return $cached;
-}
-
-/**
- * input_entity
- *
- * @param mixed $entity_name
- * @param string $name
- * @access public
- * @return void
- */
-function input_entity($entity_name, $message = null, $name = null)
-{
-    if (is_null($name)) {
-        $name = $entity_name.'_id';
+        foreach ($entity_structs as $struct) {
+            echo json_encode($struct)."\n";
+        }
     }
 
-    if (! $message) {
-        $message = '无效的 '.$name;
+    $entity_relationships = [];
+
+    $r = 0;
+
+    while (command_read_bool('Add relationship')) {
+
+        $r += 1;
+
+        $entity_relationships[] = [
+            'type' => command_read("#$r Type:", 0, ['belongs_to', 'has_one', 'has_many']),
+            'relate_to' => command_read("#$r Relate to:"),
+            'relation_name' => command_read("#$r Relation name:"),
+        ];
+
+        foreach ($entity_relationships as $relationship) {
+            echo json_encode($relationship)."\n";
+        }
     }
 
-    if ($id = input($name)) {
-        $entity = dao($entity_name)->find($id);
+    error_log(_generate_entity_file($entity_name, $entity_structs, $entity_relationships), 3, $file = ENTITY_DIR.'/'.$entity_name.'.php');
+    echo $file."\n";
+    error_log(_generate_dao_file($entity_name, $entity_structs, $entity_relationships), 3, $file = DAO_DIR.'/'.$entity_name.'.php');
+    echo $file."\n";
+    error_log(_generate_migration_file($entity_name, $entity_structs, $entity_relationships), 3, $file = migration_file_path($entity_name));
+    echo $file."\n";
 
-        otherwise($entity->is_not_null(), sprintf($message, $id));
+});/*}}}*/
 
-        return $entity;
+command('entity:make-from-db', '从数据库表结构初始化 entity、dao、migration', function ()
+{/*{{{*/
+    $table_infos = db_query('show tables', [], unit_of_work_db_config_key());
+
+    foreach ($table_infos as $table_info) {
+        $entity_structs = $entity_relationships = [];
+        $entity_name = $table = reset($table_info);
+
+        if ($entity_name === MIGRATION_TABLE) {
+            continue;
+        }
+
+        $schema_infos = db_query("show create table `$table`", [], unit_of_work_db_config_key());
+        $schema_info = reset($schema_infos);
+
+        $lines = explode("\n", $schema_info['Create Table']);
+
+        foreach ($lines as $i => $line) {
+
+            $line = trim($line);
+
+            if (stristr($line, 'CONSTRAINT')) {
+                unset($lines[$i]);
+                continue;
+            }
+
+            if (stristr($line, 'CREATE TABLE')) continue;
+            if (stristr($line, 'PRIMARY KEY')) continue;
+            if (stristr($line, ') ENGINE=')) continue;
+            if (stristr($line, '`id`')) continue;
+            if (stristr($line, '`version`')) continue;
+            if (stristr($line, '`create_time`')) continue;
+            if (stristr($line, '`update_time`')) continue;
+            if (stristr($line, '`delete_time`')) continue;
+
+
+            preg_match('/^`(.*)`/', $line, $matches);
+            if ($matches) {
+                $entity_structs[] = [
+                    'name' => $matches[1],
+                ];
+                continue;
+            }
+
+            preg_match('/^KEY `fk_'.$entity_name.'_(.*)_idx` \(`(.*)`\)/', $line, $matches);
+            if ($matches) {
+                $relate_to = preg_replace('/[0-9]/', '', $matches[1]);
+                $relation_name = str_replace('_id', '', $matches[2]);
+                $entity_relationships[] = [
+                    'type' => 'belongs_to',
+                    'relate_to' => $relate_to,
+                    'relation_name' => $relation_name,
+                ];
+            }
+        }
+
+        $up_sql = str_replace(",\n)", "\n)", implode("\n", $lines));
+
+        $migration = sprintf("# up\n%s;\n\n# down\ndrop table `%s`;", $up_sql, $entity_name);
+
+        echo $entity_name.":\n";
+        error_log(_generate_entity_file($entity_name, $entity_structs, $entity_relationships), 3, $file = ENTITY_DIR.'/'.$entity_name.'.php');
+        echo $file."\n";
+        error_log(_generate_dao_file($entity_name, $entity_structs, $entity_relationships), 3, $file = DAO_DIR.'/'.$entity_name.'.php');
+        echo $file."\n";
+        error_log($migration, 3, $file = migration_file_path($entity_name));
+        echo $file."\n";
     }
-
-    otherwise(false, sprintf($message, $id));
-}
+});/*}}}*/
