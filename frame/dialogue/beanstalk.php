@@ -19,7 +19,7 @@ function dialogue_send_action(closure $action = null)
     return $container;
 }/*}}}*/
 
-function dialogue_topic_miss(closure $action = null)
+function dialogue_topic_miss_action(closure $action = null)
 {/*{{{*/
     static $container = null;
 
@@ -280,7 +280,7 @@ function dialogue_watch($config_key = 'default', $memory_limit = 1048576)
     });
 
     $topics = dialogue_topics();
-    $missed_action = dialogue_topic_miss();
+    $missed_action = dialogue_topic_miss_action();
 
     for (;;) {
 

@@ -11,7 +11,7 @@ command('dialogue:operator', '启动接线员', function ()
         business_wechat_send_message($user_id, [],[],$message);
     });
 
-    dialogue_topic_miss(function ($user_id, $message) {
+    dialogue_topic_miss_action(function ($user_id, $message) {
         dialogue_say($user_id, "不懂 '$message'");
     });
 
