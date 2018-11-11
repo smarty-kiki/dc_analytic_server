@@ -41,10 +41,7 @@ if_not_found(function () {
 });
 
 // init controller
-include CONTROLLER_DIR.'/work.php';
-include CONTROLLER_DIR.'/talk.php';
 include CONTROLLER_DIR.'/index.php';
-include CONTROLLER_DIR.'/ical.php';
 
 // fix
 not_found();
