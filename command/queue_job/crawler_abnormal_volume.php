@@ -18,7 +18,7 @@ function crawler_bittrex_abnormal_volume_slack_save_and_send_slack($symbol, $ran
             'at' => now(),
         ]);
 
-        slack_say_to_smarty_ds($description);
+        slack_say_to_smarty_coin($description);
     }
 }/*}}}*/
 
@@ -63,7 +63,7 @@ queue_job('crawler_bittrex_abnormal_volume', function ()
             throw $ex;
         }
 
-        slack_say_to_smarty_ds($ex->getMessage());
+        slack_say_to_smarty_coin($ex->getMessage());
     }
 
     return true;
@@ -130,7 +130,7 @@ queue_job('crawler_bittrex_abnormal_volume_single', function ($data)
         if ($ex instanceof PDOException) {
             throw $ex;
         }
-        slack_say_to_smarty_ds($ex->getMessage());
+        slack_say_to_smarty_coin($ex->getMessage());
     }
 
     return true;
@@ -201,7 +201,7 @@ queue_job('crawler_binance_abnormal_volume_single', function ($data)
         if ($ex instanceof PDOException) {
             throw $ex;
         }
-        slack_say_to_smarty_ds($ex->getMessage());
+        slack_say_to_smarty_coin($ex->getMessage());
     }
 
     return true;
@@ -270,7 +270,7 @@ queue_job('crawler_okex_abnormal_volume_single', function ($data)
         if ($ex instanceof PDOException) {
             throw $ex;
         }
-        slack_say_to_smarty_ds($ex->getMessage());
+        slack_say_to_smarty_coin($ex->getMessage());
     }
 
     return true;
@@ -339,7 +339,7 @@ queue_job('crawler_bitfinex_abnormal_volume_single', function ($data)
         if ($ex instanceof PDOException) {
             throw $ex;
         }
-        slack_say_to_smarty_ds($ex->getMessage());
+        slack_say_to_smarty_coin($ex->getMessage());
     }
 
     return true;

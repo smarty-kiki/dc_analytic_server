@@ -1,15 +1,8 @@
 <?php
 
-function slack_say_to_smarty_dc($message)
+function slack_say_to_smarty_coin($message)
 {
-    return remote_post('https://hooks.slack.com/services/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', json_encode([
+    return remote_post('https://hooks.slack.com/services/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', json_encode([
         'text' => $message
-    ]));
-}
-
-function slack_say_to_smarty_ds($message)
-{
-    return remote_post('https://hooks.slack.com/services/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', json_encode([
-        'text' => $message
-    ]));
+    ]), 10);
 }
